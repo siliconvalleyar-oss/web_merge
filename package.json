@@ -1,6 +1,6 @@
 {
   "name": "web-merge-final",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Proyecto mergeado: tienda C++ + animaciones GSAP + animaciones Rive",
   "main": "server.js",
   "scripts": {
