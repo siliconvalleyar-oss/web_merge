@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.2 (2026-06-25)
+- **Docs**: Reglas de oro actualizadas en `docs/RULES.md` — flujo de versionado y tags
+- **Chore**: Bump version a v1.0.2
+
 ## v1.0.0 (2026-06-25)
 - **Merge Completo**: Unificación de tienda_web_server + web_animation_skill + web_rive
 - **Backend**: Node.js + Express con 20+ endpoints REST
