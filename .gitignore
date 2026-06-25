@@ -1,0 +1,13 @@
+node_modules/
+.env
+*.log
+*.pid
+data/*.json
+!data/seed_*.json
+dist/
+.cache/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
