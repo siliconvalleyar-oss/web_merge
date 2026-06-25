@@ -4,6 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -25,10 +26,34 @@ function guardarJSON(archivo, data) {
 
 const sesiones = {};
 const carritos = {};
+const refreshTokens = {};
+const ACCESS_TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 horas
+const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 días
+const BCRYPT_ROUNDS = 12;
 
 function generarToken() {
   return crypto.randomBytes(32).toString('hex');
 }
+
+function generarTokenExpirado() {
+  return {
+    accessToken: crypto.randomBytes(32).toString('hex'),
+    refreshToken: crypto.randomBytes(48).toString('hex'),
+    accessExpiresAt: Date.now() + ACCESS_TOKEN_EXPIRY,
+    refreshExpiresAt: Date.now() + REFRESH_TOKEN_EXPIRY
+  };
+}
+
+// Limpiar tokens expirados cada hora
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, data] of Object.entries(sesiones)) {
+    if (data.expiresAt && now > data.expiresAt) delete sesiones[token];
+  }
+  for (const [token, data] of Object.entries(refreshTokens)) {
+    if (now > data.expiresAt) delete refreshTokens[token];
+  }
+}, 60 * 60 * 1000);
 
 function authMiddleware(req, res, next) {
   const auth = req.headers.authorization || '';
@@ -36,7 +61,12 @@ function authMiddleware(req, res, next) {
   if (!token || !sesiones[token]) {
     return res.status(401).json({ error: 'No autorizado' });
   }
-  req.usuario = sesiones[token];
+  const session = sesiones[token];
+  if (session.expiresAt && Date.now() > session.expiresAt) {
+    delete sesiones[token];
+    return res.status(401).json({ error: 'Sesión expirada', codigo: 'TOKEN_EXPIRED' });
+  }
+  req.usuario = session;
   req.token = token;
   next();
 }
@@ -76,22 +106,108 @@ app.get('/api/productos/:id', (req, res) => {
   res.json(prod);
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { usuario, password } = req.body;
   const usuarios = leerJSON('usuarios.json');
-  const user = usuarios.find(u => u.usuario === usuario && u.password === password);
+  const user = usuarios.find(u => u.usuario === usuario);
   if (!user) return res.status(401).json({ error: 'Credenciales inválidas' });
-  const token = generarToken();
-  sesiones[token] = {
+  const passwordValida = await bcrypt.compare(password, user.password);
+  if (!passwordValida) return res.status(401).json({ error: 'Credenciales inválidas' });
+  const tokens = generarTokenExpirado();
+  sesiones[tokens.accessToken] = {
     id: user.id,
     usuario: user.usuario,
     nombre: user.nombre,
     email: user.email,
     direccion: user.direccion,
-    rol: user.rol
+    rol: user.rol,
+    expiresAt: tokens.accessExpiresAt
+  };
+  refreshTokens[tokens.refreshToken] = {
+    usuarioId: user.id,
+    expiresAt: tokens.refreshExpiresAt
   };
   if (!carritos[user.id]) carritos[user.id] = [];
-  res.json({ token, usuario: { nombre: user.nombre, usuario: user.usuario, rol: user.rol }, mensaje: 'Inicio de sesión exitoso' });
+  res.json({
+    token: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+    usuario: { nombre: user.nombre, usuario: user.usuario, rol: user.rol },
+    mensaje: 'Inicio de sesión exitoso'
+  });
+});
+
+app.post('/api/auth/register', async (req, res) => {
+  const { usuario, password, nombre, email } = req.body;
+  if (!usuario || !password || !nombre || !email) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+  }
+  const usuarios = leerJSON('usuarios.json');
+  if (usuarios.find(u => u.usuario === usuario)) {
+    return res.status(400).json({ error: 'El usuario ya existe' });
+  }
+  if (usuarios.find(u => u.email === email)) {
+    return res.status(400).json({ error: 'El email ya está registrado' });
+  }
+  const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  const nuevoUsuario = {
+    id: Date.now(),
+    usuario,
+    password: hashedPassword,
+    nombre,
+    email,
+    direccion: '',
+    rol: 'cliente'
+  };
+  usuarios.push(nuevoUsuario);
+  guardarJSON('usuarios.json', usuarios);
+  res.json({ mensaje: 'Usuario registrado exitosamente', usuario: { nombre, usuario, email } });
+});
+
+app.post('/api/auth/refresh', (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken || !refreshTokens[refreshToken]) {
+    return res.status(401).json({ error: 'Refresh token inválido' });
+  }
+  const rt = refreshTokens[refreshToken];
+  if (Date.now() > rt.expiresAt) {
+    delete refreshTokens[refreshToken];
+    return res.status(401).json({ error: 'Refresh token expirado' });
+  }
+  const usuarios = leerJSON('usuarios.json');
+  const user = usuarios.find(u => u.id === rt.usuarioId);
+  if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
+  delete refreshTokens[refreshToken];
+  const tokens = generarTokenExpirado();
+  sesiones[tokens.accessToken] = {
+    id: user.id,
+    usuario: user.usuario,
+    nombre: user.nombre,
+    email: user.email,
+    direccion: user.direccion,
+    rol: user.rol,
+    expiresAt: tokens.accessExpiresAt
+  };
+  refreshTokens[tokens.refreshToken] = {
+    usuarioId: user.id,
+    expiresAt: tokens.refreshExpiresAt
+  };
+  res.json({
+    token: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    expiresIn: ACCESS_TOKEN_EXPIRY
+  });
+});
+
+app.post('/api/auth/logout', authMiddleware, (req, res) => {
+  delete sesiones[req.token];
+  for (const [rt, data] of Object.entries(refreshTokens)) {
+    if (data.usuarioId === req.usuario.id) delete refreshTokens[rt];
+  }
+  res.json({ mensaje: 'Sesión cerrada exitosamente' });
 });
 
 app.get('/api/auth/session', authMiddleware, (req, res) => {

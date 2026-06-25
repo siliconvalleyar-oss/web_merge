@@ -1,5 +1,8 @@
 const API = '/api';
 let tokenSesion = localStorage.getItem('token');
+let refreshToken = localStorage.getItem('refreshToken');
+let tokenExpiresAt = parseInt(localStorage.getItem('tokenExpiresAt') || '0');
+let refrescandoToken = false;
 let productosCache = [];
 let carritoActual = [];
 let categoriaActiva = 'todas';
@@ -93,10 +96,31 @@ async function apiFetch(url, options = {}) {
   };
   if (tokenSesion) {
     config.headers['Authorization'] = `Bearer ${tokenSesion}`;
+
+    // Auto-refresh si expira en menos de 5 minutos
+    if (tokenExpiresAt && Date.now() > tokenExpiresAt - 5 * 60 * 1000 && refreshToken && !refrescandoToken) {
+      refrescandoToken = true;
+      refreshAccessToken().finally(() => { refrescandoToken = false; });
+    }
   }
   try {
     const res = await fetch(`${API}${url}`, config);
     const data = await res.json();
+
+    // Token expirado: intentar refresh automático una vez
+    if (res.status === 401 && data.codigo === 'TOKEN_EXPIRED' && refreshToken && !refrescandoToken) {
+      refrescandoToken = true;
+      const refreshed = await refreshAccessToken();
+      refrescandoToken = false;
+      if (refreshed) {
+        // Reintentar la petición original con el nuevo token
+        config.headers['Authorization'] = `Bearer ${tokenSesion}`;
+        const retryRes = await fetch(`${API}${url}`, config);
+        const retryData = await retryRes.json();
+        return { ok: retryRes.ok, status: retryRes.status, data: retryData };
+      }
+    }
+
     return { ok: res.ok, status: res.status, data };
   } catch (err) {
     console.error('[TechStore] Error de conexión:', err);
@@ -424,13 +448,86 @@ async function iniciarSesion(e) {
   });
   if (result.ok) {
     tokenSesion = result.data.token;
+    refreshToken = result.data.refreshToken;
+    tokenExpiresAt = result.data.expiresIn ? Date.now() + result.data.expiresIn : 0;
     localStorage.setItem('token', tokenSesion);
+    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+    if (tokenExpiresAt) localStorage.setItem('tokenExpiresAt', tokenExpiresAt.toString());
     mostrarToast(`¡Bienvenido, ${result.data.usuario.nombre}!`, 'success');
     verificarSesion();
     mostrarSeccion('catalogo');
     actualizarBadgeCarrito();
   } else {
     mostrarToast(result.data.error || 'Credenciales inválidas', 'error');
+  }
+  return false;
+}
+
+async function refreshAccessToken() {
+  if (!refreshToken) return false;
+  try {
+    const res = await fetch(`${API}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken })
+    });
+    const data = await res.json();
+    if (res.ok && data.token) {
+      tokenSesion = data.token;
+      refreshToken = data.refreshToken;
+      tokenExpiresAt = data.expiresIn ? Date.now() + data.expiresIn : 0;
+      localStorage.setItem('token', tokenSesion);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+      if (tokenExpiresAt) localStorage.setItem('tokenExpiresAt', tokenExpiresAt.toString());
+      return true;
+    }
+    // Refresh token inválido o expirado
+    cerrarSesion();
+    return false;
+  } catch (err) {
+    console.error('[TechStore] Error refreshing token:', err);
+    return false;
+  }
+}
+
+async function registrarUsuario(e) {
+  e.preventDefault();
+  const nombre = document.getElementById('regNombre')?.value?.trim();
+  const email = document.getElementById('regEmail')?.value?.trim();
+  const usuario = document.getElementById('regUsuario')?.value?.trim();
+  const password = document.getElementById('regPassword')?.value;
+  const password2 = document.getElementById('regPassword2')?.value;
+
+  if (!nombre || !email || !usuario || !password || !password2) {
+    mostrarToast('Completa todos los campos', 'error');
+    return false;
+  }
+  if (password !== password2) {
+    mostrarToast('Las contraseñas no coinciden', 'error');
+    return false;
+  }
+  if (password.length < 6) {
+    mostrarToast('La contraseña debe tener al menos 6 caracteres', 'error');
+    return false;
+  }
+
+  const result = await apiFetch('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ usuario, password, nombre, email })
+  });
+
+  if (result.ok) {
+    mostrarToast('¡Cuenta creada exitosamente! Ahora inicia sesión.', 'success');
+    document.getElementById('regNombre').value = '';
+    document.getElementById('regEmail').value = '';
+    document.getElementById('regUsuario').value = '';
+    document.getElementById('regPassword').value = '';
+    document.getElementById('regPassword2').value = '';
+    // Pre-llenar login con el usuario registrado
+    document.getElementById('loginUsuario').value = usuario;
+    mostrarSeccion('login');
+  } else {
+    mostrarToast(result.data.error || 'Error al registrarse', 'error');
   }
   return false;
 }
@@ -442,6 +539,7 @@ async function verificarSesion() {
     const user = result.data.usuario;
     const loginLink = document.getElementById('loginLink');
     const perfilLink = document.getElementById('perfilLink');
+    const registerLink = document.getElementById('registerLink');
     const userName = document.getElementById('userName');
     const perfilNombre = document.getElementById('perfilNombre');
     const perfilEmail = document.getElementById('perfilEmail');
@@ -449,6 +547,7 @@ async function verificarSesion() {
 
     if (loginLink) loginLink.style.display = 'none';
     if (perfilLink) perfilLink.style.display = 'block';
+    if (registerLink) registerLink.style.display = 'none';
     if (userName) userName.textContent = user.nombre;
     if (perfilNombre) perfilNombre.textContent = user.nombre;
     if (perfilEmail) perfilEmail.textContent = user.email || '';
@@ -464,13 +563,23 @@ async function verificarSesion() {
   }
 }
 
-function cerrarSesion() {
+async function cerrarSesion() {
+  // Notificar al servidor para limpiar la sesión
+  if (tokenSesion) {
+    await apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
+  }
   tokenSesion = null;
+  refreshToken = null;
+  tokenExpiresAt = 0;
   localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('tokenExpiresAt');
   const loginLink = document.getElementById('loginLink');
   const perfilLink = document.getElementById('perfilLink');
+  const registerLink = document.getElementById('registerLink');
   if (loginLink) loginLink.style.display = 'block';
   if (perfilLink) perfilLink.style.display = 'none';
+  if (registerLink) registerLink.style.display = 'block';
   carritoActual = [];
   actualizarBadgeCarrito();
   mostrarToast('Sesión cerrada', 'info');
