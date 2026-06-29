@@ -138,6 +138,190 @@ anchor.addEventListener('click', (e) => {
 });
 ```
 
+## Patrón State Management (pub/sub) — de `web_rive`
+
+```js
+const Store = {
+  state: { faqs: [], filteredFaqs: [], faqCategory: 'todas', faqSearch: '' },
+  listeners: {},
+  get(key) { return this.state[key]; },
+  set(key, value) {
+    this.state[key] = value;
+    this._notify(key, value);
+  },
+  on(key, callback) {
+    if (!this.listeners[key]) this.listeners[key] = [];
+    this.listeners[key].push(callback);
+    return () => { /* unsubscribe */ };
+  },
+  _notify(key, value) {
+    if (this.listeners[key]) this.listeners[key].forEach(fn => fn(value));
+  }
+};
+```
+
+## Arquitectura Full-Stack — v4.0.0
+
+```
+web_merge_final/
+├── server.js              # Express + API routes + WhatsApp init
+├── config/config.js       # JWT secret, port
+├── database/db.js         # SQLite connection (better-sqlite3)
+├── services/
+│   ├── rag.js             # RAG engine (TF-IDF scoring)
+│   └── whatsapp.js        # WhatsApp bot (whatsapp-web.js)
+├── routes/
+│   ├── faqs.js            # GET /api/faqs, /api/faqs/categories
+│   ├── config.js          # GET/PUT /api/config
+│   ├── contact.js         # POST /api/contact
+│   ├── chat.js            # POST /api/chat (RAG)
+│   └── admin.js           # Admin CRUD + login + WhatsApp status
+├── sql/schema.sql         # Database schema (SQLite)
+├── setup-db.js            # Initialize database with defaults
+├── data/
+│   ├── webmerge.db        # SQLite database file
+│   └── knowledge-base.json# Legacy static data
+└── public/
+    ├── index.html         # SPA principal
+    ├── admin/
+    │   ├── index.html     # Panel de administración
+    │   ├── css/admin.css
+    │   └── js/admin.js
+    ├── css/styles.css
+    └── js/modules/
+        ├── store.js
+        ├── ui.js
+        ├── animations.js
+        ├── chatbot.js
+        ├── knowledge-base.js
+        └── main.js
+```
+
+## Base de Datos (SQLite)
+
+5 tablas con `better-sqlite3`:
+
+| Tabla | Propósito | Campos clave |
+|-------|-----------|--------------|
+| `config` | Configuración dinámica (colores, site_name) | `config_key`, `config_value` |
+| `faqs` | Base de conocimiento del chatbot | `category`, `question`, `answer`, `keywords`, `enabled` |
+| `contacts` | Mensajes del formulario de contacto | `name`, `email`, `message`, `is_read` |
+| `whatsapp_messages` | Historial de chat de WhatsApp | `number`, `message`, `response` |
+| `users` | Usuarios del panel admin | `username`, `password_hash`, `role` |
+
+Inicialización: `node setup-db.js`
+
+## API REST — Endpoints
+
+| Endpoint | Método | Auth | Descripción |
+|----------|--------|------|-------------|
+| `/api/faqs` | GET | No | FAQs públicas con filtro por `?category=` y `?search=` |
+| `/api/faqs/categories` | GET | No | Lista de categorías |
+| `/api/config` | GET | No | Configuración pública (colores, nombres) |
+| `/api/config` | PUT | No | Actualizar configuración (admin) |
+| `/api/contact` | POST | No | Enviar mensaje de contacto |
+| `/api/chat` | POST | No | Consulta RAG al chatbot |
+| `/api/admin/login` | POST | No | Autenticación JWT |
+| `/api/admin/verify` | GET | JWT | Verificar token |
+| `/api/admin/config` | GET | JWT | Obtener configuración |
+| `/api/admin/faqs` | GET/POST | JWT | CRUD FAQs |
+| `/api/admin/faqs/:id` | PUT/DELETE | JWT | Editar/eliminar FAQ |
+| `/api/admin/contacts` | GET | JWT | Ver mensajes |
+| `/api/admin/contacts/:id/read` | PUT | JWT | Marcar como leído |
+| `/api/admin/whatsapp-status` | GET | JWT | Estado de WhatsApp |
+| `/api/admin/whatsapp-messages` | GET | JWT | Mensajes de WhatsApp |
+
+## Motor RAG (Retrieval Augmented Generation) — de `rag`
+
+El chatbot usa scoring TF-IDF para encontrar la FAQ más relevante:
+
+```
+score = question_coincidencia × 0.5 + answer_coincidencia × 0.3 + keywords_coincidencia × 0.2
+```
+
+Tokenización: minúsculas, elimina signos, divide por espacios, filtra tokens < 2 caracteres.
+
+```js
+function score(sentence, queryTokens) {
+  const tokens = tokenize(sentence);
+  let matchCount = 0;
+  for (const qt of queryTokens) {
+    for (const t of tokens) {
+      if (t.includes(qt) || qt.includes(t)) { matchCount++; break; }
+    }
+  }
+  return matchCount / queryTokens.length;
+}
+```
+
+## WhatsApp Bot — integración con `whatsapp-web.js`
+
+El bot de WhatsApp comparte el mismo motor RAG que el chatbot web:
+
+```
+Usuario WhatsApp → mensaje → RAG engine → FAQ matching → respuesta automática
+                          → INSERT en whatsapp_messages (historial)
+```
+
+- Se autentica via código QR escaneado desde el teléfono
+- Estado visible en `/admin` (conectado/desconectado/QR listo)
+- Ignora mensajes de grupos
+- Almacena todo el historial de conversaciones
+
+## Panel de Administración (`/admin`)
+
+- Login con JWT (token en localStorage)
+- Gestión CRUD de FAQs (crear, editar, eliminar)
+- Editor de paleta de colores en tiempo real (color pickers)
+- Visualización de mensajes de contacto recibidos
+- Estado y mensajes del bot de WhatsApp
+
+Usuario por defecto: `admin` / `admin123`
+
+## Arquitectura Modular (ES Modules) — de `web_rive` + `reedit`
+
+El JS se divide en módulos con responsabilidades únicas:
+
+| Módulo | Responsabilidad |
+|--------|----------------|
+| `store.js` | State management (pub/sub) |
+| `ui.js` | Cursor, ripple, navbar, contact form, toasts |
+| `animations.js` | GSAP, AOS, hero grid, scrollTrigger, counters |
+| `chatbot.js` | Chatbot con knowledge base + integración FAQs |
+| `knowledge-base.js` | Base de conocimiento, búsqueda, filtros, acordeón |
+| `main.js` | Orquestador: inicializa todos los módulos |
+
+## Base de Conocimiento (Retrieval Pattern) — de `rag`
+
+Sistema de recuperación de información con búsqueda y filtros:
+
+```js
+// data/knowledge-base.json — 12 preguntas con categorías
+// Filtrado por categoría + búsqueda full-text
+Store.filterFAQs = () => {
+  let result = [...Store.state.faqs];
+  if (category !== 'todas') result = result.filter(f => f.category === category);
+  if (search) {
+    const q = search.toLowerCase();
+    result = result.filter(f =>
+      f.question.toLowerCase().includes(q) ||
+      f.answer.toLowerCase().includes(q)
+    );
+  }
+};
+```
+
+## Arquitectura Data-Driven — de `reedit` + `website-reddit`
+
+Los datos se separan del código en archivos JSON:
+
+```
+data/
+└── knowledge-base.json    # FAQs con categorías
+```
+
+El servidor Express sirve `/data` como ruta estática para que el frontend cargue los datos via `fetch()`.
+
 ## Responsive Design
 
 | Breakpoint | Cambios |

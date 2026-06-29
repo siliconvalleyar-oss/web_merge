@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — WebMerge Studio</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <link rel="stylesheet" href="/admin/css/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Login -->
+    <div id="loginView" class="view">
+      <div class="login-card">
+        <div class="login-header">
+          <h1>WebMerge Studio</h1>
+          <p>Panel de administración</p>
+        </div>
+        <form id="loginForm" class="login-form">
+          <div class="form-group">
+            <label>Usuario</label>
+            <input type="text" id="loginUser" class="form-input" placeholder="admin" required>
+          </div>
+          <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" id="loginPass" class="form-input" placeholder="••••••" required>
+          </div>
+          <div id="loginError" class="login-error"></div>
+          <button type="submit" class="btn btn-primary btn-full">Ingresar</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardView" class="view hidden">
+      <header class="admin-header">
+        <div class="admin-header-inner">
+          <h2>⚡ Panel de Control</h2>
+          <div class="admin-header-right">
+            <span id="userBadge" class="user-badge"></span>
+            <button id="logoutBtn" class="btn btn-sm">Salir</button>
+          </div>
+        </div>
+      </header>
+
+      <nav class="admin-tabs">
+        <button class="tab active" data-tab="faqs">FAQs</button>
+        <button class="tab" data-tab="config">Config</button>
+        <button class="tab" data-tab="contacts">Contactos</button>
+        <button class="tab" data-tab="whatsapp">WhatsApp</button>
+      </nav>
+
+      <main class="admin-content">
+        <!-- FAQs Tab -->
+        <section id="tabFaqs" class="tab-content active">
+          <div class="tab-header">
+            <h3>Base de Conocimiento</h3>
+            <button id="addFaqBtn" class="btn btn-primary">+ Nueva FAQ</button>
+          </div>
+          <div class="table-wrap">
+            <table id="faqsTable">
+              <thead>
+                <tr><th>ID</th><th>Categoría</th><th>Pregunta</th><th>Estado</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="faqsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Config Tab -->
+        <section id="tabConfig" class="tab-content">
+          <div class="tab-header"><h3>Configuración de colores</h3></div>
+          <form id="configForm" class="config-grid">
+            <div class="form-group">
+              <label>Color primario</label>
+              <input type="color" name="primary_color" class="color-picker">
+            </div>
+            <div class="form-group">
+              <label>Color secundario</label>
+              <input type="color" name="secondary_color" class="color-picker">
+            </div>
+            <div class="form-group">
+              <label>Color de acento</label>
+              <input type="color" name="accent_color" class="color-picker">
+            </div>
+            <div class="form-group">
+              <label>Color de fondo</label>
+              <input type="color" name="bg_color" class="color-picker">
+            </div>
+            <div class="form-group">
+              <label>Color de superficie</label>
+              <input type="color" name="surface_color" class="color-picker">
+            </div>
+            <div class="form-group">
+              <label>Color de texto</label>
+              <input type="color" name="text_color" class="color-picker">
+            </div>
+            <div class="form-group">
+              <label>Nombre del sitio</label>
+              <input type="text" name="site_name" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>Nombre del chatbot</label>
+              <input type="text" name="chatbot_name" class="form-input">
+            </div>
+          </form>
+          <button id="saveConfigBtn" class="btn btn-primary">Guardar configuración</button>
+          <div id="configSaved" class="toast-info hidden">Configuración guardada</div>
+        </section>
+
+        <!-- Contacts Tab -->
+        <section id="tabContacts" class="tab-content">
+          <div class="tab-header"><h3>Mensajes de contacto</h3></div>
+          <div class="table-wrap">
+            <table id="contactsTable">
+              <thead><tr><th>Fecha</th><th>Nombre</th><th>Email</th><th>Mensaje</th><th>Estado</th></tr></thead>
+              <tbody id="contactsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- WhatsApp Tab -->
+        <section id="tabWhatsapp" class="tab-content">
+          <div class="tab-header"><h3>WhatsApp Bot</h3></div>
+          <div id="whatsappStatus" class="whatsapp-status"></div>
+          <div id="whatsappQr" class="whatsapp-qr"></div>
+          <div class="table-wrap" id="whatsappMessagesWrap">
+            <h4>Mensajes recientes</h4>
+            <table id="whatsappTable">
+              <thead><tr><th>Fecha</th><th>Número</th><th>Mensaje</th><th>Respuesta</th></tr></thead>
+              <tbody id="whatsappBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="faqModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="faqModalTitle">Nueva FAQ</h3>
+        <button id="closeFaqModal" class="modal-close">✕</button>
+      </div>
+      <form id="faqForm" class="modal-form">
+        <div class="form-group">
+          <label>Categoría</label>
+          <select id="faqCategory" class="form-input">
+            <option value="general">General</option>
+            <option value="tecnico">Técnico</option>
+            <option value="proceso">Proceso</option>
+            <option value="soporte">Soporte</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Pregunta</label>
+          <input type="text" id="faqQuestion" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label>Respuesta</label>
+          <textarea id="faqAnswer" class="form-input" rows="4" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Keywords (separadas por coma)</label>
+          <input type="text" id="faqKeywords" class="form-input" placeholder="ej: chatbot, bot, inteligente">
+        </div>
+        <input type="hidden" id="faqId" value="">
+        <button type="submit" class="btn btn-primary btn-full">Guardar FAQ</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/admin/js/admin.js"></script>
+</body>
+</html>

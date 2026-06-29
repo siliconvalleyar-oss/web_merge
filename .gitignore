@@ -3,6 +3,11 @@ node_modules/
 *.log
 *.pid
 data/*.json
+data/*.db
+data/*.db-wal
+data/*.db-shm
+.wwebjs_auth/
+.wwebjs_cache/
 !data/seed_*.json
 dist/
 .cache/

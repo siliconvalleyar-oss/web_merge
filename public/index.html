@@ -25,6 +25,7 @@
         <a href="#inicio" class="nav-link active">Inicio</a>
         <a href="#servicios" class="nav-link">Servicios</a>
         <a href="#proyectos" class="nav-link">Proyectos</a>
+        <a href="#faq" class="nav-link">FAQ</a>
         <a href="#nosotros" class="nav-link">Nosotros</a>
         <a href="#contacto" class="nav-link">Contacto</a>
       </div>
@@ -200,6 +201,28 @@
       </div>
     </section>
 
+    <section class="knowledge-base" id="faq">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-label">Centro de Conocimiento</span>
+          <h2 class="section-title">Preguntas <span class="gradient-text">frecuentes</span></h2>
+          <p class="section-desc">
+            Encuentra respuestas rápidas a las dudas más comunes. Usa el buscador o filtra por categoría.
+          </p>
+        </div>
+        <div class="kb-toolbar" data-aos="fade-up">
+          <div class="kb-search-wrap">
+            <span class="kb-search-icon">⌕</span>
+            <input type="text" id="kbSearch" class="kb-search-input" placeholder="Buscar en la base de conocimiento...">
+          </div>
+          <div class="kb-filters" id="kbFilters"></div>
+        </div>
+        <div class="kb-list" id="kbList">
+          <div class="kb-loading">Cargando base de conocimiento...</div>
+        </div>
+      </div>
+    </section>
+
     <section class="about" id="nosotros">
       <div class="container">
         <div class="section-header" data-aos="fade-up">
@@ -330,9 +353,10 @@
           <a href="#" class="social-link" title="Twitter">◎</a>
         </div>
       </div>
-      <div class="footer-bottom">
-        <p>&copy; 2026 WebMerge Studio. Todos los derechos reservados.</p>
-      </div>
+        <div class="footer-bottom">
+          <p>© 2026 <strong>WebMerge Studio</strong>. Todos los derechos reservados.</p>
+          <p class="footer-meta">v4.0.0 · <a href="/admin" target="_blank">Admin</a></p>
+        </div>
     </div>
   </footer>
 
@@ -362,6 +386,11 @@
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="js/modules/store.js"></script>
+  <script src="js/modules/ui.js"></script>
+  <script src="js/modules/animations.js"></script>
+  <script src="js/modules/chatbot.js"></script>
+  <script src="js/modules/knowledge-base.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,123 @@
+/* ── Reset & Base ─────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #0a0a14; color: #e8e8f0;
+  min-height: 100vh; line-height: 1.6;
+}
+input,button,select,textarea{font:inherit}
+.hidden{display:none!important}
+
+/* ── Login ───────────────────────────────────────────────── */
+.view{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-card{
+  background:#1a1a2e;border:1px solid #2d2d44;border-radius:16px;
+  padding:48px;width:100%;max-width:420px;
+}
+.login-header{text-align:center;margin-bottom:32px}
+.login-header h1{font-size:24px;font-weight:800;background:linear-gradient(135deg,#6c5ce7,#00cec9);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-header p{color:#9999aa;margin-top:4px;font-size:14px}
+.login-form{display:flex;flex-direction:column;gap:16px}
+.login-error{color:#ff6b6b;font-size:13px;text-align:center;min-height:20px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:13px;font-weight:600;color:#9999aa;text-transform:uppercase;letter-spacing:.5px}
+.form-input,.color-picker{
+  background:#0a0a14;border:1px solid #2d2d44;border-radius:8px;
+  padding:10px 14px;color:#e8e8f0;font-size:14px;
+  transition:border-color .2s;
+}
+.form-input:focus{outline:none;border-color:#6c5ce7}
+.color-picker{height:42px;padding:4px;cursor:pointer}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:10px 20px;border-radius:8px;border:1px solid #2d2d44;
+  background:#1a1a2e;color:#e8e8f0;font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+}
+.btn:hover{background:#2d2d44}
+.btn-primary{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
+.btn-primary:hover{background:#5a4bd1}
+.btn-sm{padding:6px 14px;font-size:13px}
+.btn-full{width:100%}
+
+/* ── Dashboard ──────────────────────────────────────────── */
+.admin-header{
+  background:#1a1a2e;border-bottom:1px solid #2d2d44;padding:16px 32px;
+  position:sticky;top:0;z-index:100
+}
+.admin-header-inner{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto}
+.admin-header h2{font-size:18px;font-weight:700}
+.admin-header-right{display:flex;align-items:center;gap:12px}
+.user-badge{font-size:13px;color:#9999aa}
+
+/* ── Tabs ────────────────────────────────────────────────── */
+.admin-tabs{
+  display:flex;gap:0;border-bottom:1px solid #2d2d44;
+  max-width:1200px;margin:0 auto;padding:0 32px;
+}
+.tab{
+  padding:14px 24px;background:none;border:none;border-bottom:2px solid transparent;
+  color:#9999aa;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.tab:hover{color:#e8e8f0}
+.tab.active{color:#6c5ce7;border-bottom-color:#6c5ce7}
+
+/* ── Content ────────────────────────────────────────────── */
+.admin-content{max-width:1200px;margin:24px auto;padding:0 32px}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.tab-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.tab-header h3{font-size:18px;font-weight:700}
+
+/* ── Table ───────────────────────────────────────────────── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #2d2d44}
+th{color:#9999aa;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+td{color:#e8e8f0}
+tr:hover td{background:rgba(108,92,231,.03)}
+
+/* ── Buttons in table ───────────────────────────────────── */
+.btn-edit{padding:4px 12px;font-size:12px;margin-right:4px}
+.btn-danger{background:#ff6b6b;border-color:#ff6b6b;color:#fff;padding:4px 12px;font-size:12px}
+.btn-danger:hover{background:#e05555}
+
+/* ── Config Grid ────────────────────────────────────────── */
+.config-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:20px}
+
+/* ── Toast ───────────────────────────────────────────────── */
+.toast-info{
+  margin-top:12px;padding:10px 16px;border-radius:8px;
+  background:rgba(108,92,231,.15);border:1px solid #6c5ce7;
+  color:#a78bfa;font-size:13px;
+}
+
+/* ── Modal ───────────────────────────────────────────────── */
+.modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.modal-content{
+  position:relative;background:#1a1a2e;border:1px solid #2d2d44;
+  border-radius:16px;padding:32px;width:100%;max-width:540px;
+  max-height:90vh;overflow-y:auto;
+}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-header h3{font-size:18px;font-weight:700}
+.modal-close{background:none;border:none;color:#9999aa;font-size:20px;cursor:pointer}
+.modal-form{display:flex;flex-direction:column;gap:16px}
+
+/* ── Whatsapp ────────────────────────────────────────────── */
+.whatsapp-status{padding:16px;margin-bottom:16px;border-radius:8px;font-weight:600}
+.whatsapp-status.connected{background:rgba(0,206,201,.1);border:1px solid #00cec9;color:#00cec9}
+.whatsapp-status.disconnected{background:rgba(255,107,107,.1);border:1px solid #ff6b6b;color:#ff6b6b}
+.whatsapp-status.qr_ready{background:rgba(108,92,231,.1);border:1px solid #6c5ce7;color:#6c5ce7}
+.whatsapp-qr{text-align:center;margin-bottom:16px}
+.whatsapp-qr img{max-width:260px;border-radius:8px}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media(max-width:768px){
+  .login-card{padding:32px 24px}
+  .admin-header{padding:12px 16px}
+  .admin-content,.admin-tabs{padding:0 16px}
+  .tab{padding:12px 16px;font-size:13px}
+  .config-grid{grid-template-columns:1fr}
+}

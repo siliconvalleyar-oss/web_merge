@@ -1,13 +1,22 @@
 {
-  "name": "web-merge-final",
-  "version": "2.0.0",
-  "description": "WebMerge Studio - Single Page Website",
+  "name": "webmerge-studio",
+  "version": "4.0.0",
+  "description": "WebMerge Studio — Full-stack landing page con RAG chatbot + WhatsApp",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "db:init": "node setup-db.js",
+    "seed": "node setup-db.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "bcrypt": "^5.1.1",
+    "better-sqlite3": "^12.11.1",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.22.5",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.34.7"
   }
 }

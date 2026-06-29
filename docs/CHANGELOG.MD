@@ -1,5 +1,52 @@
 # Changelog
 
+## [4.0.0] — 2026-06-29
+
+### Added
+- Base de datos SQLite con 5 tablas (config, faqs, contacts, users, whatsapp_messages)
+- API RESTful completa: /api/faqs, /api/config, /api/contact, /api/chat (RAG), /api/admin
+- Motor RAG (Retrieval Augmented Generation) server-side con scoring TF-IDF
+- Chatbot sincronizado con WhatsApp (whatsapp-web.js + puppeteer)
+- Panel de administración en /admin con login JWT
+- Gestión CRUD de FAQs desde el admin
+- Editor de paleta de colores dinámica
+- Visualización de mensajes de contacto
+- Estado y mensajes del bot de WhatsApp
+- Arquitectura full-stack con Express + SQLite
+
+### Changed
+- Store.js simplificado, datos servidos desde API en lugar de JSON estático
+- Chatbot.js ahora consulta /api/chat con RAG server-side
+- knowledge-base.js obtiene FAQs desde /api/faqs
+- ui.js envía formulario de contacto a /api/contact
+- Server.js ahora incluye MySQL pool y rutas API
+- Base de datos migrada de JSON estático a SQLite
+
+### Docs
+- VERSION actualizado a 4.0.0
+- SQL schema en sql/schema.sql
+- Script de inicialización: node setup-db.js
+
+## [3.0.0] — 2026-06-29
+
+### Added
+- Arquitectura modular con ES modules (inspirado en web_rive)
+- State management con patrón pub/sub (Store)
+- Base de conocimiento con búsqueda y filtros (inspirado en rag)
+- FAQs con acordeón expandible
+- Sistema de data-driven desde archivos JSON (inspirado en reedit)
+- Chatbot con knowledge base ampliada + integración con FAQs
+
+### Changed
+- JS monolítico dividido en 5 módulos: store, ui, animations, chatbot, knowledge-base
+- Servidor Express ahora sirve /data como ruta estática
+- Cursor custom mejorado con más elementos interactivos
+- Chatbot con 11 entradas de conocimiento (antes 6)
+
+### Docs
+- VERSION actualizado a 3.0.0
+- DESARROLLO.MD actualizado con nuevas técnicas
+
 ## [2.0.0] — 2026-06-29
 
 ### Added
