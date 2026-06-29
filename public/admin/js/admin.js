@@ -1,5 +1,7 @@
 let TOKEN = null;
 let USER = null;
+let WHATSAPP_POLLER = null;
+let LAST_MSG_COUNT = 0;
 
 const $ = id => document.getElementById(id);
 
@@ -52,9 +54,10 @@ $('logoutBtn').addEventListener('click', () => {
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     showTab(tab.dataset.tab);
+    stopWhatsAppPolling();
     if (tab.dataset.tab === 'faqs') loadFAQs();
     if (tab.dataset.tab === 'contacts') loadContacts();
-    if (tab.dataset.tab === 'whatsapp') loadWhatsApp();
+    if (tab.dataset.tab === 'whatsapp') { loadWhatsApp(); startWhatsAppPolling(); }
     if (tab.dataset.tab === 'config') loadConfig();
   });
 });
@@ -167,6 +170,12 @@ $('saveConfigBtn').addEventListener('click', async () => {
 async function loadContacts() {
   const data = await api('/contacts');
   if (data.error) return;
+  const unread = data.filter(c => !c.is_read).length;
+  const badge = document.querySelector('[data-tab="contacts"] .badge-msg');
+  if (badge) {
+    badge.textContent = unread;
+    badge.style.display = unread ? 'inline-flex' : 'none';
+  }
   $('contactsBody').innerHTML = data.map(c =>
     `<tr onclick="${c.is_read ? '' : `markRead(${c.id})`}" style="${c.is_read ? '' : 'font-weight:600;background:rgba(108,92,231,.05)'}">
       <td>${new Date(c.created_at).toLocaleDateString()}</td>
@@ -202,15 +211,40 @@ async function loadWhatsApp() {
 
   const msgs = await api('/whatsapp-messages');
   if (msgs && !msgs.error) {
+    if (msgs.length > LAST_MSG_COUNT && LAST_MSG_COUNT > 0) {
+      const nuevas = msgs.length - LAST_MSG_COUNT;
+      showToast(`${nuevas} mensaje${nuevas > 1 ? 's' : ''} nuevo${nuevas > 1 ? 's' : ''} de WhatsApp`);
+    }
+    LAST_MSG_COUNT = msgs.length;
+    const badge = document.querySelector('[data-tab="whatsapp"] .badge-msg');
+    if (badge) badge.textContent = msgs.filter(m => !m.is_read).length;
+
     $('whatsappBody').innerHTML = msgs.map(m =>
       `<tr>
-        <td>${new Date(m.created_at).toLocaleString()}</td>
-        <td>${m.number}</td>
+        <td class="nowrap">${new Date(m.created_at).toLocaleString()}</td>
+        <td><strong>${m.number}</strong></td>
         <td>${m.message}</td>
-        <td>${m.response ? m.response.substring(0, 80) + '…' : '—'}</td>
+        <td style="color:var(--color-text-muted,#9999aa);font-size:13px">${m.response ? m.response.substring(0, 80) + '…' : '—'}</td>
       </tr>`
     ).join('');
   }
+}
+
+function startWhatsAppPolling() {
+  stopWhatsAppPolling();
+  WHATSAPP_POLLER = setInterval(loadWhatsApp, 5000);
+}
+
+function stopWhatsAppPolling() {
+  if (WHATSAPP_POLLER) { clearInterval(WHATSAPP_POLLER); WHATSAPP_POLLER = null; }
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#6c5ce7;color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;z-index:9999;animation:fadeInUp .3s;box-shadow:0 4px 20px rgba(0,0,0,.3)';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 4000);
 }
 
 /* ── Auto-login check ────────────────────────────────────── */
