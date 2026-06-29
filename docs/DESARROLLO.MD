@@ -337,3 +337,23 @@ El servidor Express sirve `/data` como ruta estática para que el frontend cargu
 - `.sr-only`: clase para lectores de pantalla
 - `aria-label` en botones sin texto
 - Contraste de color suficiente en ambos temas
+
+## Script de Inicio (`start.sh`)
+
+Script bash que automatiza el arranque:
+
+```bash
+./start.sh            # Puerto 8080
+./start.sh 3000       # Puerto 3000
+PORT=4000 ./start.sh  # Puerto 4000
+```
+
+- Inicializa la DB automáticamente si `data/webmerge.db` no existe
+- Usa `$PORT` del argumento > variable de entorno > default 8080
+- Banner informativo con puerto, ruta DB y link al admin
+
+- `prefers-reduced-motion`: desactiva todas las animaciones
+- `focus-visible`: outline accesible para navegación por teclado
+- `.sr-only`: clase para lectores de pantalla
+- `aria-label` en botones sin texto
+- Contraste de color suficiente en ambos temas

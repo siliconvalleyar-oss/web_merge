@@ -52,7 +52,21 @@ Variables de entorno:
 | `PORT` | `8080` | Puerto del servidor |
 | `JWT_SECRET` | `webmerge_secret_key_...` | Secreto para tokens JWT |
 
-## Scripts
+## Script de Inicio (Recomendado)
+
+```bash
+./start.sh            # Puerto por defecto (8080)
+./start.sh 3000       # Puerto personalizado
+PORT=4000 ./start.sh  # También funciona con variable de entorno
+```
+
+El script:
+
+1. Verifica e inicializa la base de datos automáticamente si no existe
+2. Lee `$PORT` del argumento, variable de entorno, o usa 8080 por defecto
+3. Muestra un banner informativo antes de arrancar
+
+## Scripts npm
 
 | Comando | Descripción |
 |---------|-------------|
