@@ -1,634 +1,269 @@
-const API = '/api';
-let tokenSesion = localStorage.getItem('token');
-let refreshToken = localStorage.getItem('refreshToken');
-let tokenExpiresAt = parseInt(localStorage.getItem('tokenExpiresAt') || '0');
-let refrescandoToken = false;
-let productosCache = [];
-let carritoActual = [];
-let categoriaActiva = 'todas';
-let paginaActual = 1;
+/* ============================================================
+   WebMerge Studio — Main JavaScript
+   Inspirado en: electronica_store, web_rive, animation_web_skill,
+                 tienda_web_server, web_cursor
+   ============================================================ */
 
-const FALLBACK_PRODUCTOS = [
-  {"id":1,"nombre":"Auriculares Bluetooth Pro","precio":89.99,"descripcion":"Auriculares inalámbricos con cancelación de ruido activa.","categoria":"electronica","stock":25,"imagen":"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop","valoraciones":4.5},
-  {"id":2,"nombre":"Smartwatch Deportivo","precio":199.99,"descripcion":"Reloj inteligente con GPS y monitor cardíaco.","categoria":"electronica","stock":30,"imagen":"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop","valoraciones":4.7},
-  {"id":5,"nombre":"Teclado Mecánico RGB","precio":129.99,"descripcion":"Teclado mecánico con switches Cherry MX y RGB.","categoria":"informatica","stock":15,"imagen":"https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&h=400&fit=crop","valoraciones":4.8}
-];
+document.addEventListener('DOMContentLoaded', () => {
 
-function init() {
-  console.log('[TechStore] Inicializando...');
-  if (tokenSesion) verificarSesion();
-  cargarProductos();
-  configurarNavegacion();
-  configurarChat();
-  configurarTeclado();
-}
-
-function configurarChat() {
-  const btn = document.getElementById('chatbotToggle');
-  const close = document.getElementById('chatClose');
-  const win = document.getElementById('chatWindow');
-  if (btn) btn.addEventListener('click', () => win?.classList.toggle('open'));
-  if (close) close.addEventListener('click', () => win?.classList.remove('open'));
-}
-
-function configurarTeclado() {
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.toast').forEach(t => t.remove());
-      document.getElementById('chatWindow')?.classList.remove('open');
-    }
-  });
-}
-
-document.addEventListener('DOMContentLoaded', init);
-
-function mostrarSeccion(id) {
-  document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
-  document.querySelectorAll('.nav-link[data-seccion]').forEach(l => l.classList.remove('active'));
-
-  const seccion = document.getElementById(`seccion-${id}`);
-  if (seccion) seccion.classList.add('activa');
-
-  const link = document.querySelector(`.nav-link[data-seccion="${id}"]`);
-  if (link) link.classList.add('active');
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  if (id === 'carrito') cargarCarrito();
-  if (id === 'checkout') cargarResumenCheckout();
-}
-
-function configurarNavegacion() {
-  document.querySelectorAll('.nav-link[data-seccion]').forEach(link => {
-    link.addEventListener('click', () => mostrarSeccion(link.dataset.seccion));
-  });
-
-  const toggle = document.getElementById('mobileToggle');
-  const nav = document.getElementById('navLinks');
-  if (toggle) toggle.addEventListener('click', function() {
-    nav?.classList.toggle('active');
-    this.classList.toggle('active');
-  });
-
-  document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-      nav?.classList.remove('active');
-      toggle?.classList.remove('active');
+  /* ── Custom Cursor ────────────────────────────────────── */
+  const cursor = document.getElementById('cursor');
+  if (cursor) {
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
     });
+    document.querySelectorAll('a, button, input, textarea, .service-card, .project-card, .stat-card').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+      el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+    });
+  }
+
+  /* ── AOS Init ─────────────────────────────────────────── */
+  AOS.init({
+    duration: 600,
+    easing: 'ease-out-cubic',
+    once: true,
+    offset: 80
   });
 
+  /* ── Hero Grid Animation ──────────────────────────────── */
+  const heroGrid = document.getElementById('heroGrid');
+  if (heroGrid) {
+    for (let i = 0; i < 36; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'hero-grid-cell';
+      heroGrid.appendChild(cell);
+    }
+    const cells = heroGrid.querySelectorAll('.hero-grid-cell');
+    setInterval(() => {
+      const idx = Math.floor(Math.random() * cells.length);
+      cells[idx].classList.add('active');
+      setTimeout(() => cells[idx].classList.remove('active'), 3000);
+    }, 500);
+  }
+
+  /* ── GSAP Hero ────────────────────────────────────────── */
+  gsap.from('.hero-title', { y: 60, opacity: 0, duration: 1, delay: 0.3, ease: 'power3.out' });
+  gsap.from('.hero-desc', { y: 40, opacity: 0, duration: 0.8, delay: 0.5, ease: 'power3.out' });
+  gsap.from('.hero-actions a', {
+    y: 30, opacity: 0, duration: 0.6, delay: 0.7,
+    stagger: 0.15, ease: 'power3.out'
+  });
+  gsap.from('.hero-scroll', { y: 20, opacity: 0, duration: 0.6, delay: 1.2, ease: 'power3.out' });
+
+  /* ── ScrollTrigger: Cards ───────────────────────────────── */
+  gsap.utils.toArray('.service-card, .project-card').forEach((card, i) => {
+    ScrollTrigger.create({
+      trigger: card,
+      start: 'top 85%',
+      onEnter: () => {
+        gsap.to(card, {
+          y: 0, opacity: 1, duration: 0.6,
+          delay: i * 0.1, ease: 'power3.out',
+          overwrite: 'auto'
+        });
+      }
+    });
+    gsap.set(card, { y: 40, opacity: 0 });
+  });
+
+  /* ── Navbar Scroll ────────────────────────────────────── */
+  const navbar = document.getElementById('navbar');
+  let lastScroll = 0;
   window.addEventListener('scroll', () => {
-    const header = document.getElementById('navbar');
-    if (header) header.classList.toggle('scrolled', window.scrollY > 50);
+    const scrollY = window.scrollY;
+    navbar.classList.toggle('scrolled', scrollY > 60);
 
-    const btn = document.getElementById('backToTop');
-    if (btn) btn.classList.toggle('show', window.scrollY > 400);
+    const backToTop = document.getElementById('backToTop');
+    if (backToTop) backToTop.classList.toggle('visible', scrollY > 400);
+
+    /* Active nav link */
+    document.querySelectorAll('.nav-link').forEach(link => {
+      const section = document.querySelector(link.getAttribute('href'));
+      if (section) {
+        const rect = section.getBoundingClientRect();
+        link.classList.toggle('active', rect.top <= 150 && rect.bottom >= 150);
+      }
+    });
+
+    lastScroll = scrollY;
   });
 
-  const topBtn = document.getElementById('backToTop');
-  if (topBtn) topBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-}
+  /* ── Mobile Menu ──────────────────────────────────────── */
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  if (navToggle && navLinks) {
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+    navLinks.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => navLinks.classList.remove('open'));
+    });
+  }
 
-async function apiFetch(url, options = {}) {
-  const config = {
-    headers: { 'Content-Type': 'application/json' },
-    ...options
+  /* ── Smooth Scroll ────────────────────────────────────── */
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(anchor.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  /* ── Stats Counter ────────────────────────────────────── */
+  const counters = document.querySelectorAll('.counter');
+  const animateCounter = (el) => {
+    const target = parseFloat(el.dataset.target);
+    const duration = 2000;
+    const start = performance.now();
+    const update = (now) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = (target * eased).toFixed(target % 1 === 0 ? 0 : 1);
+      if (progress < 1) requestAnimationFrame(update);
+    };
+    requestAnimationFrame(update);
   };
-  if (tokenSesion) {
-    config.headers['Authorization'] = `Bearer ${tokenSesion}`;
 
-    // Auto-refresh si expira en menos de 5 minutos
-    if (tokenExpiresAt && Date.now() > tokenExpiresAt - 5 * 60 * 1000 && refreshToken && !refrescandoToken) {
-      refrescandoToken = true;
-      refreshAccessToken().finally(() => { refrescandoToken = false; });
-    }
-  }
-  try {
-    const res = await fetch(`${API}${url}`, config);
-    const data = await res.json();
-
-    // Token expirado: intentar refresh automático una vez
-    if (res.status === 401 && data.codigo === 'TOKEN_EXPIRED' && refreshToken && !refrescandoToken) {
-      refrescandoToken = true;
-      const refreshed = await refreshAccessToken();
-      refrescandoToken = false;
-      if (refreshed) {
-        // Reintentar la petición original con el nuevo token
-        config.headers['Authorization'] = `Bearer ${tokenSesion}`;
-        const retryRes = await fetch(`${API}${url}`, config);
-        const retryData = await retryRes.json();
-        return { ok: retryRes.ok, status: retryRes.status, data: retryData };
+  const statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.counter').forEach(animateCounter);
+        statsObserver.unobserve(entry.target);
       }
-    }
+    });
+  }, { threshold: 0.3 });
 
-    return { ok: res.ok, status: res.status, data };
-  } catch (err) {
-    console.error('[TechStore] Error de conexión:', err);
-    return { ok: false, status: 0, data: { error: 'Error de conexión' } };
+  const statsSection = document.querySelector('.stats');
+  if (statsSection) statsObserver.observe(statsSection);
+
+  /* ── Ripple Effect ────────────────────────────────────── */
+  document.querySelectorAll('.btn').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      const rect = this.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      const size = Math.max(rect.width, rect.height);
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+      ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+      this.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove());
+    });
+  });
+
+  /* ── Toast Notifications ──────────────────────────────── */
+  const toastContainer = document.getElementById('toastContainer');
+  window.showToast = (message, type = 'info') => {
+    const toast = document.createElement('div');
+    toast.className = `toast toast--${type}`;
+    const icons = { success: '✓', error: '✕', info: '●' };
+    toast.innerHTML = `<span>${icons[type] || '●'}</span> ${message}`;
+    toastContainer.appendChild(toast);
+    setTimeout(() => {
+      toast.style.animation = 'toastOut 0.3s ease forwards';
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  };
+
+  /* ── Contact Form ─────────────────────────────────────── */
+  const contactForm = document.getElementById('contactForm');
+  if (contactForm) {
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      let valid = true;
+      const fields = contactForm.querySelectorAll('.form-input');
+      fields.forEach(field => {
+        field.classList.remove('error');
+        if (!field.value.trim() || (field.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value))) {
+          field.classList.add('error');
+          valid = false;
+        }
+      });
+      if (!valid) {
+        window.showToast('Corrige los campos marcados', 'error');
+        return;
+      }
+      const success = document.getElementById('contactSuccess');
+      if (success) {
+        success.classList.add('show');
+        contactForm.reset();
+        window.showToast('Mensaje enviado con éxito', 'success');
+      }
+    });
+
+    contactForm.querySelectorAll('.form-input').forEach(field => {
+      field.addEventListener('input', () => field.classList.remove('error'));
+    });
   }
-}
 
-function mostrarToast(mensaje, tipo = 'info') {
-  const container = document.getElementById('toastContainer');
-  if (!container) return;
-  const toast = document.createElement('div');
-  toast.className = `toast ${tipo}`;
-  toast.textContent = mensaje;
-  container.appendChild(toast);
+  /* ── Chatbot ──────────────────────────────────────────── */
+  const chatbotToggle = document.getElementById('chatbotToggle');
+  const chatbotWindow = document.getElementById('chatbotWindow');
+  const chatbotClose = document.getElementById('chatbotClose');
+  const chatbotSend = document.getElementById('chatbotSend');
+  const chatbotInput = document.getElementById('chatbotInput');
+  const chatbotBody = document.getElementById('chatbotBody');
+
+  const chatbotResponses = {
+    hola: '¡Hola! Bienvenido a WebMerge Studio. ¿En qué podemos ayudarte?',
+    precio: 'Nuestros proyectos parten desde $500 USD. El precio final depende del alcance y requerimientos.',
+    servicio: 'Ofrecemos diseño UI/UX, desarrollo frontend, backend y consultoría tecnológica.',
+    contacto: 'Puedes escribirnos al formulario de contacto o enviarnos un email a hola@webmerge.studio',
+    horario: 'Atendemos de lunes a viernes de 9:00 a 18:00 (GMT-3).',
+    proyecto: 'Cuéntanos sobre tu proyecto y te enviaremos una propuesta personalizada sin compromiso.',
+    default: 'Gracias por tu mensaje. Un miembro de nuestro equipo te responderá a la brevedad.'
+  };
+
+  const addChatMessage = (text, type) => {
+    const msg = document.createElement('div');
+    msg.className = `chatbot-msg chatbot-msg--${type}`;
+    msg.textContent = text;
+    chatbotBody.appendChild(msg);
+    chatbotBody.scrollTop = chatbotBody.scrollHeight;
+  };
+
+  const getBotResponse = (input) => {
+    const lower = input.toLowerCase();
+    if (lower.includes('hola') || lower.includes('buen')) return chatbotResponses.hola;
+    if (lower.includes('precio') || lower.includes('cuest') || lower.includes('tarifa')) return chatbotResponses.precio;
+    if (lower.includes('servicio') || lower.includes('hacen')) return chatbotResponses.servicio;
+    if (lower.includes('contacto') || lower.includes('email') || lower.includes('correo')) return chatbotResponses.contacto;
+    if (lower.includes('horario') || lower.includes('hora')) return chatbotResponses.horario;
+    if (lower.includes('proyecto') || lower.includes('idea') || lower.includes('trabajo')) return chatbotResponses.proyecto;
+    return chatbotResponses.default;
+  };
+
+  if (chatbotToggle && chatbotWindow) {
+    chatbotToggle.addEventListener('click', () => chatbotWindow.classList.toggle('open'));
+    if (chatbotClose) chatbotClose.addEventListener('click', () => chatbotWindow.classList.remove('open'));
+
+    const sendMessage = () => {
+      const text = chatbotInput.value.trim();
+      if (!text) return;
+      addChatMessage(text, 'user');
+      chatbotInput.value = '';
+      setTimeout(() => addChatMessage(getBotResponse(text), 'bot'), 500);
+    };
+
+    if (chatbotSend) chatbotSend.addEventListener('click', sendMessage);
+    if (chatbotInput) {
+      chatbotInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendMessage();
+      });
+    }
+  }
+
+  /* ── Back to Top ──────────────────────────────────────── */
+  const backToTop = document.getElementById('backToTop');
+  if (backToTop) {
+    backToTop.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  /* ── Welcome Toast ────────────────────────────────────── */
   setTimeout(() => {
-    toast.style.animation = 'toastOut 0.3s ease forwards';
-    setTimeout(() => toast.remove(), 300);
-  }, 3500);
-}
-
-async function cargarProductos() {
-  console.log('[TechStore] Cargando productos...');
-  const loader = document.getElementById('loaderCatalogo');
-  const grid = document.getElementById('catalogoGrid');
-  if (!grid) { console.warn('[TechStore] #catalogoGrid no encontrado'); return; }
-  if (loader) loader.style.display = 'flex';
-
-  let productos = [];
-  let categorias = [];
-
-  try {
-    const params = new URLSearchParams({
-      pagina: paginaActual,
-      por_pagina: 50,
-      categoria: categoriaActiva,
-      busqueda: document.getElementById('searchInput')?.value || ''
-    });
-
-    const result = await apiFetch(`/productos?${params}`);
-    if (loader) loader.style.display = 'none';
-
-    if (result.ok && result.data && result.data.productos) {
-      productos = result.data.productos;
-      categorias = result.data.categorias || [];
-      console.log(`[TechStore] ${productos.length} productos cargados desde API`);
-    } else {
-      throw new Error(result.data?.error || 'API respondió con error');
-    }
-  } catch (err) {
-    console.warn('[TechStore] Usando datos de fallback:', err.message);
-    productos = FALLBACK_PRODUCTOS;
-    categorias = [...new Set(productos.map(p => p.categoria))];
-    if (loader) loader.style.display = 'none';
-  }
-
-  productosCache = productos;
-
-  if (!productos || productos.length === 0) {
-    grid.innerHTML = `
-      <div class="carrito-empty" style="grid-column:1/-1">
-        <div class="icon">📦</div>
-        <h3>No se encontraron productos</h3>
-        <p>Intenta con otros filtros</p>
-      </div>`;
-    return;
-  }
-
-  grid.innerHTML = productos.map(p => `
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="${p.imagen}" alt="${p.nombre}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22><rect fill=%22%2313131a%22 width=%22400%22 height=%22400%22/><text fill=%22%236c5ce7%22 font-size=%2220%22 x=%22150%22 y=%22210%22>📦</text></svg>'">
-        <span class="stock-badge ${p.stock <= 0 ? 'agotado' : p.stock < 10 ? 'bajo' : 'disponible'}">
-          ${p.stock <= 0 ? 'Agotado' : p.stock < 10 ? `Stock: ${p.stock}` : 'Disponible'}
-        </span>
-      </div>
-      <div class="product-info">
-        <span class="product-categoria">${p.categoria}</span>
-        <h3 class="product-nombre">${p.nombre}</h3>
-        <p class="product-desc">${p.descripcion || ''}</p>
-        <div class="product-bottom">
-          <span class="product-precio">${(p.precio || 0).toFixed(2)}</span>
-          <button class="btn btn-primary btn-sm add-cart" data-id="${p.id}" ${p.stock <= 0 ? 'disabled' : ''}>
-            ${p.stock <= 0 ? 'Agotado' : 'Agregar'}
-          </button>
-        </div>
-      </div>
-    </div>
-  `).join('');
-
-  document.querySelectorAll('.add-cart').forEach(btn => {
-    btn.addEventListener('click', async function() {
-      const id = parseInt(this.dataset.id);
-      await agregarAlCarrito(id);
-    });
-  });
-
-  renderizarFiltros(categorias);
-  actualizarBadgeCarrito();
-
-  if (typeof AOS !== 'undefined') AOS.refresh();
-  console.log('[TechStore] Productos renderizados correctamente');
-}
-
-function renderizarFiltros(categorias) {
-  const container = document.getElementById('filtrosCategoria');
-  if (!container) return;
-  let html = `<button class="filtro-btn ${categoriaActiva === 'todas' ? 'active' : ''}" data-cat="todas">Todas</button>`;
-  [...new Set(categorias)].forEach(cat => {
-    const label = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : cat;
-    html += `<button class="filtro-btn ${categoriaActiva === cat ? 'active' : ''}" data-cat="${cat}">${label}</button>`;
-  });
-  container.innerHTML = html;
-  container.querySelectorAll('.filtro-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      categoriaActiva = btn.dataset.cat;
-      paginaActual = 1;
-      cargarProductos();
-    });
-  });
-}
-
-function debounceBusqueda() {
-  clearTimeout(window.searchTimer);
-  window.searchTimer = setTimeout(() => {
-    paginaActual = 1;
-    cargarProductos();
-  }, 300);
-}
-
-async function agregarAlCarrito(id) {
-  if (!tokenSesion) {
-    mostrarSeccion('login');
-    mostrarToast('Inicia sesión para agregar productos', 'error');
-    return;
-  }
-  const result = await apiFetch('/carrito/agregar', {
-    method: 'POST',
-    body: JSON.stringify({ producto_id: id, cantidad: 1 })
-  });
-  if (result.ok) {
-    mostrarToast(result.data.mensaje || 'Producto agregado al carrito', 'success');
-    actualizarBadgeCarrito();
-  } else {
-    mostrarToast(result.data.error || 'Error al agregar', 'error');
-  }
-}
-
-async function actualizarBadgeCarrito() {
-  const badge = document.getElementById('cartBadge');
-  if (!badge) return;
-  if (!tokenSesion) {
-    badge.textContent = '0';
-    return;
-  }
-  const result = await apiFetch('/carrito');
-  if (result.ok && result.data.items) {
-    const count = result.data.items.reduce((s, i) => s + i.cantidad, 0);
-    badge.textContent = count;
-    badge.classList.remove('pulse');
-    void badge.offsetWidth;
-    badge.classList.add('pulse');
-  }
-}
-
-async function cargarCarrito() {
-  const empty = document.getElementById('carritoEmpty');
-  const items = document.getElementById('carritoItems');
-  const footer = document.getElementById('carritoFooter');
-  if (!empty || !items || !footer) return;
-
-  if (!tokenSesion) {
-    empty.style.display = 'block';
-    items.style.display = 'none';
-    footer.style.display = 'none';
-    return;
-  }
-
-  const result = await apiFetch('/carrito');
-  if (!result.ok || !result.data.items || result.data.items.length === 0) {
-    empty.style.display = 'block';
-    items.style.display = 'none';
-    footer.style.display = 'none';
-    return;
-  }
-
-  empty.style.display = 'none';
-  items.style.display = 'flex';
-  footer.style.display = 'block';
-
-  carritoActual = result.data.items;
-
-  items.innerHTML = result.data.items.map(item => `
-    <div class="carrito-item" data-id="${item.producto_id}">
-      <img src="${item.producto.imagen}" alt="${item.producto.nombre}" class="carrito-item-img">
-      <div class="carrito-item-info">
-        <div class="carrito-item-nombre">${item.producto.nombre}</div>
-        <div class="carrito-item-precio">$${(item.producto.precio * item.cantidad).toFixed(2)}</div>
-      </div>
-      <div class="carrito-item-qty">
-        <button class="qty-btn" onclick="cambiarCantidad(${item.producto_id}, -1)">−</button>
-        <span class="qty-value">${item.cantidad}</span>
-        <button class="qty-btn" onclick="cambiarCantidad(${item.producto_id}, 1)">+</button>
-      </div>
-      <div class="carrito-item-subtotal">$${item.subtotal.toFixed(2)}</div>
-      <button class="carrito-remove" onclick="eliminarDelCarrito(${item.producto_id})">✕</button>
-    </div>
-  `).join('');
-
-  const totalEl = document.getElementById('carritoTotal');
-  if (totalEl) totalEl.textContent = `$${result.data.total.toFixed(2)}`;
-}
-
-async function cambiarCantidad(id, delta) {
-  const item = carritoActual.find(i => i.producto_id === id);
-  if (!item) return;
-  const nueva = Math.max(1, item.cantidad + delta);
-  const result = await apiFetch('/carrito/actualizar', {
-    method: 'POST',
-    body: JSON.stringify({ producto_id: id, cantidad: nueva })
-  });
-  if (result.ok) {
-    cargarCarrito();
-    actualizarBadgeCarrito();
-  }
-}
-
-async function eliminarDelCarrito(id) {
-  const result = await apiFetch(`/carrito/${id}`, { method: 'DELETE' });
-  if (result.ok) {
-    cargarCarrito();
-    actualizarBadgeCarrito();
-    mostrarToast('Producto eliminado del carrito', 'info');
-  }
-}
-
-async function irACheckout() {
-  const result = await apiFetch('/carrito');
-  if (!result.ok || !result.data.items || result.data.items.length === 0) {
-    mostrarToast('Agrega productos al carrito primero', 'error');
-    return;
-  }
-  mostrarSeccion('checkout');
-  cargarResumenCheckout();
-}
-
-function cargarResumenCheckout() {
-  const container = document.getElementById('resumenItems');
-  const total = document.getElementById('resumenTotal');
-  if (!container || !total) return;
-  if (!carritoActual.length) {
-    mostrarSeccion('carrito');
-    return;
-  }
-  container.innerHTML = carritoActual.map(item => `
-    <div class="resumen-item">
-      <span>${item.producto.nombre} × ${item.cantidad}</span>
-      <span>$${item.subtotal.toFixed(2)}</span>
-    </div>
-  `).join('');
-  total.textContent = `$${carritoActual.reduce((s, i) => s + i.subtotal, 0).toFixed(2)}`;
-}
-
-function formatearTarjeta(input) {
-  let val = input.value.replace(/\D/g, '').slice(0, 16);
-  val = val.replace(/(.{4})/g, '$1 ').trim();
-  input.value = val;
-}
-
-async function procesarCheckout(e) {
-  e.preventDefault();
-  const btn = document.getElementById('checkoutBtn');
-  if (!btn) return false;
-  btn.textContent = 'Procesando...';
-  btn.disabled = true;
-
-  const data = {
-    nombre: document.getElementById('checkoutNombre')?.value?.trim() || '',
-    email: document.getElementById('checkoutEmail')?.value?.trim() || '',
-    direccion: document.getElementById('checkoutDireccion')?.value?.trim() || '',
-    tarjeta: (document.getElementById('checkoutTarjeta')?.value || '').replace(/\s/g, '')
-  };
-
-  if (!data.nombre || !data.email || !data.direccion || data.tarjeta.length < 13) {
-    mostrarToast('Completa todos los campos correctamente', 'error');
-    btn.textContent = 'Confirmar Pedido';
-    btn.disabled = false;
-    return false;
-  }
-
-  const result = await apiFetch('/checkout', {
-    method: 'POST',
-    body: JSON.stringify(data)
-  });
-
-  btn.textContent = 'Confirmar Pedido';
-  btn.disabled = false;
-
-  if (result.ok) {
-    const form = document.getElementById('checkoutForm');
-    const success = document.getElementById('checkoutSuccess');
-    const pid = document.getElementById('pedidoId');
-    if (form) form.style.display = 'none';
-    if (success) success.style.display = 'block';
-    if (pid) pid.textContent = `Pedido #${result.data.pedido_id}`;
-    carritoActual = [];
-    actualizarBadgeCarrito();
-    mostrarToast('¡Pedido confirmado exitosamente!', 'success');
-  } else {
-    mostrarToast(result.data.error || 'Error al procesar el pedido', 'error');
-  }
-  return false;
-}
-
-async function iniciarSesion(e) {
-  e.preventDefault();
-  const usuario = document.getElementById('loginUsuario')?.value?.trim();
-  const password = document.getElementById('loginPassword')?.value;
-  if (!usuario || !password) {
-    mostrarToast('Ingresa usuario y contraseña', 'error');
-    return false;
-  }
-  const result = await apiFetch('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ usuario, password })
-  });
-  if (result.ok) {
-    tokenSesion = result.data.token;
-    refreshToken = result.data.refreshToken;
-    tokenExpiresAt = result.data.expiresIn ? Date.now() + result.data.expiresIn : 0;
-    localStorage.setItem('token', tokenSesion);
-    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-    if (tokenExpiresAt) localStorage.setItem('tokenExpiresAt', tokenExpiresAt.toString());
-    mostrarToast(`¡Bienvenido, ${result.data.usuario.nombre}!`, 'success');
-    verificarSesion();
-    mostrarSeccion('catalogo');
-    actualizarBadgeCarrito();
-  } else {
-    mostrarToast(result.data.error || 'Credenciales inválidas', 'error');
-  }
-  return false;
-}
-
-async function refreshAccessToken() {
-  if (!refreshToken) return false;
-  try {
-    const res = await fetch(`${API}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken })
-    });
-    const data = await res.json();
-    if (res.ok && data.token) {
-      tokenSesion = data.token;
-      refreshToken = data.refreshToken;
-      tokenExpiresAt = data.expiresIn ? Date.now() + data.expiresIn : 0;
-      localStorage.setItem('token', tokenSesion);
-      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-      if (tokenExpiresAt) localStorage.setItem('tokenExpiresAt', tokenExpiresAt.toString());
-      return true;
-    }
-    // Refresh token inválido o expirado
-    cerrarSesion();
-    return false;
-  } catch (err) {
-    console.error('[TechStore] Error refreshing token:', err);
-    return false;
-  }
-}
-
-async function registrarUsuario(e) {
-  e.preventDefault();
-  const nombre = document.getElementById('regNombre')?.value?.trim();
-  const email = document.getElementById('regEmail')?.value?.trim();
-  const usuario = document.getElementById('regUsuario')?.value?.trim();
-  const password = document.getElementById('regPassword')?.value;
-  const password2 = document.getElementById('regPassword2')?.value;
-
-  if (!nombre || !email || !usuario || !password || !password2) {
-    mostrarToast('Completa todos los campos', 'error');
-    return false;
-  }
-  if (password !== password2) {
-    mostrarToast('Las contraseñas no coinciden', 'error');
-    return false;
-  }
-  if (password.length < 6) {
-    mostrarToast('La contraseña debe tener al menos 6 caracteres', 'error');
-    return false;
-  }
-
-  const result = await apiFetch('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ usuario, password, nombre, email })
-  });
-
-  if (result.ok) {
-    mostrarToast('¡Cuenta creada exitosamente! Ahora inicia sesión.', 'success');
-    document.getElementById('regNombre').value = '';
-    document.getElementById('regEmail').value = '';
-    document.getElementById('regUsuario').value = '';
-    document.getElementById('regPassword').value = '';
-    document.getElementById('regPassword2').value = '';
-    // Pre-llenar login con el usuario registrado
-    document.getElementById('loginUsuario').value = usuario;
-    mostrarSeccion('login');
-  } else {
-    mostrarToast(result.data.error || 'Error al registrarse', 'error');
-  }
-  return false;
-}
-
-async function verificarSesion() {
-  if (!tokenSesion) return;
-  const result = await apiFetch('/auth/session');
-  if (result.ok) {
-    const user = result.data.usuario;
-    const loginLink = document.getElementById('loginLink');
-    const perfilLink = document.getElementById('perfilLink');
-    const registerLink = document.getElementById('registerLink');
-    const userName = document.getElementById('userName');
-    const perfilNombre = document.getElementById('perfilNombre');
-    const perfilEmail = document.getElementById('perfilEmail');
-    const perfilRol = document.getElementById('perfilRol');
-
-    if (loginLink) loginLink.style.display = 'none';
-    if (perfilLink) perfilLink.style.display = 'block';
-    if (registerLink) registerLink.style.display = 'none';
-    if (userName) userName.textContent = user.nombre;
-    if (perfilNombre) perfilNombre.textContent = user.nombre;
-    if (perfilEmail) perfilEmail.textContent = user.email || '';
-    if (perfilRol) {
-      perfilRol.textContent = `Rol: ${user.rol}`;
-      if (user.rol === 'admin') {
-        perfilRol.innerHTML += ' · <a href="/admin/" style="color:var(--primary)">Panel Admin</a>';
-      }
-    }
-    actualizarBadgeCarrito();
-  } else {
-    cerrarSesion();
-  }
-}
-
-async function cerrarSesion() {
-  // Notificar al servidor para limpiar la sesión
-  if (tokenSesion) {
-    await apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
-  }
-  tokenSesion = null;
-  refreshToken = null;
-  tokenExpiresAt = 0;
-  localStorage.removeItem('token');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('tokenExpiresAt');
-  const loginLink = document.getElementById('loginLink');
-  const perfilLink = document.getElementById('perfilLink');
-  const registerLink = document.getElementById('registerLink');
-  if (loginLink) loginLink.style.display = 'block';
-  if (perfilLink) perfilLink.style.display = 'none';
-  if (registerLink) registerLink.style.display = 'block';
-  carritoActual = [];
-  actualizarBadgeCarrito();
-  mostrarToast('Sesión cerrada', 'info');
-  mostrarSeccion('catalogo');
-}
-
-async function enviarChat() {
-  const input = document.getElementById('chatInput');
-  const messages = document.getElementById('chatMessages');
-  if (!input || !messages) return;
-  const msg = input.value.trim();
-  if (!msg) return;
-
-  const userDiv = document.createElement('div');
-  userDiv.className = 'chat-msg user';
-  userDiv.textContent = msg;
-  messages.appendChild(userDiv);
-  messages.scrollTop = messages.scrollHeight;
-  input.value = '';
-
-  const result = await apiFetch('/chat', {
-    method: 'POST',
-    body: JSON.stringify({ mensaje: msg })
-  });
-
-  const botDiv = document.createElement('div');
-  botDiv.className = 'chat-msg bot';
-  botDiv.textContent = result.data?.respuesta || 'Gracias por tu mensaje. Te responderemos pronto.';
-  messages.appendChild(botDiv);
-  messages.scrollTop = messages.scrollHeight;
-}
-
-/* === Contact Form (from web_cursor) === */
-function enviarContacto(e) {
-  e.preventDefault();
-  const form = document.getElementById('contactForm');
-  const success = document.getElementById('contactSuccess');
-  if (form) form.style.display = 'none';
-  if (success) success.style.display = 'flex';
-  mostrarToast('¡Mensaje enviado exitosamente!', 'success');
-  return false;
-}
-
-function resetContactForm() {
-  const form = document.getElementById('contactForm');
-  const success = document.getElementById('contactSuccess');
-  if (form) {
-    form.reset();
-    form.style.display = 'flex';
-  }
-  if (success) success.style.display = 'none';
-}
+    window.showToast('Bienvenido a WebMerge Studio', 'info');
+  }, 1500);
+});

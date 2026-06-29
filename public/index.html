@@ -3,500 +3,365 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="TechStore Fusion - La mejor tienda de tecnología con diseños innovadores">
-  <meta name="theme-color" content="#6c5ce7">
-  <meta property="og:title" content="TechStore Fusion">
-  <meta property="og:description" content="Productos tecnológicos con diseños que combinan estética y funcionalidad">
-  <meta property="og:type" content="website">
-  <title>TechStore Fusion</title>
+  <meta name="description" content="WebMerge Studio - Desarrollo Web Profesional">
+  <title>WebMerge Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
-<nav class="navbar" id="navbar">
-  <a href="/" class="logo"><span class="logo-icon">◆</span> TechStore Fusion</a>
-  <ul class="nav-links" id="navLinks">
-    <li><button class="nav-link active" data-seccion="catalogo">Productos</button></li>
-    <li><button class="nav-link" data-seccion="servicios">Servicios</button></li>
-    <li><button class="nav-link" data-seccion="nosotros">Nosotros</button></li>
-    <li><button class="nav-link" data-seccion="contacto">Contacto</button></li>
-    <li><button class="nav-link" data-seccion="carrito">Carrito <span class="badge" id="cartBadge">0</span></button></li>
-    <li><button class="nav-link" data-seccion="login" id="loginLink">Iniciar Sesión</button></li>
-    <li><button class="nav-link" data-seccion="registro" id="registerLink" style="display:none">Registrarse</button></li>
-    <li style="display:none" id="perfilLink"><button class="nav-link" data-seccion="perfil" id="perfilBtn">👤 <span id="userName">Perfil</span></button></li>
-  </ul>
-  <button class="mobile-toggle" id="mobileToggle" aria-label="Menú">
-    <span></span><span></span><span></span>
-  </button>
-</nav>
+  <div class="cursor" id="cursor"></div>
 
-<section class="seccion activa" id="seccion-catalogo">
-  <div class="hero" data-aos="fade-up">
-    <div class="hero-visual">
-      <div class="rive-container" id="heroRive"></div>
-    </div>
-    <div class="hero-content">
-      <span class="section-label">Plataforma escalable</span>
-      <h1 class="hero-title" data-aos="fade-right" data-aos-delay="100">
-        Tecnología con <span class="gradient-text">Estilo</span>
-      </h1>
-      <p class="hero-desc" data-aos="fade-right" data-aos-delay="200">
-        Descubre productos que combinan innovación tecnológica con diseño de vanguardia.
-        Calidad premium, precios justos.
-      </p>
-      <div class="hero-actions" data-aos="fade-right" data-aos-delay="300">
-        <button class="btn btn-primary btn-lg" onclick="document.getElementById('catalogoGrid').scrollIntoView({behavior:'smooth'})">
-          Explorar Productos
-        </button>
-        <button class="btn btn-ghost btn-lg" onclick="mostrarSeccion('carrito')">
-          Ver Carrito
-        </button>
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <span class="nav-logo-icon">◆</span>
+        <span class="nav-logo-text">WebMerge<span class="text-accent">Studio</span></span>
+      </a>
+      <div class="nav-links" id="navLinks">
+        <a href="#inicio" class="nav-link active">Inicio</a>
+        <a href="#servicios" class="nav-link">Servicios</a>
+        <a href="#proyectos" class="nav-link">Proyectos</a>
+        <a href="#nosotros" class="nav-link">Nosotros</a>
+        <a href="#contacto" class="nav-link">Contacto</a>
       </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Menú">☰</button>
     </div>
-  </div>
+  </nav>
 
-  <div class="stats" data-aos="fade-up">
-    <div style="max-width:1200px;margin:0 auto;padding:0 2rem;">
-      <div class="stats__grid">
-        <div class="stats__item">
-          <span class="stats__value">99.9%</span>
-          <span class="stats__label">Uptime garantizado</span>
-        </div>
-        <div class="stats__item">
-          <span class="stats__value">&lt;100ms</span>
-          <span class="stats__label">Tiempo de respuesta</span>
-        </div>
-        <div class="stats__item">
-          <span class="stats__value">10x</span>
-          <span class="stats__label">Más rápido de desarrollar</span>
-        </div>
-        <div class="stats__item">
-          <span class="stats__value">∞</span>
-          <span class="stats__label">Escalabilidad</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="catalogo-header" data-aos="fade-up">
-    <h2>Nuestros Productos</h2>
-    <p>Selección curada de los mejores productos tecnológicos</p>
-  </div>
-
-  <div class="controles" data-aos="fade-up" data-aos-delay="100">
-    <div class="busqueda">
-      <span class="icon">🔍</span>
-      <input type="text" id="searchInput" placeholder="Buscar productos..." oninput="debounceBusqueda()">
-    </div>
-    <div class="filtros-categoria" id="filtrosCategoria"></div>
-  </div>
-
-  <div class="loader-container" id="loaderCatalogo">
-    <div class="loader"></div>
-  </div>
-  <div class="productos-grid" id="catalogoGrid"></div>
-  <div class="paginacion" id="paginacion"></div>
-</section>
-
-<section class="seccion" id="seccion-carrito">
-  <div class="carrito-seccion">
-    <div class="carrito-empty" id="carritoEmpty">
-      <div class="icon">🛒</div>
-      <h3>Tu carrito está vacío</h3>
-      <p>Agrega productos desde el catálogo para empezar a comprar</p>
-      <button class="btn btn-primary" onclick="mostrarSeccion('catalogo')" style="margin-top:1rem">Explorar Productos</button>
-    </div>
-    <div class="carrito-items" id="carritoItems"></div>
-    <div class="carrito-footer" id="carritoFooter" style="display:none">
-      <div class="carrito-total-row">
-        <span>Total</span>
-        <span class="total-valor" id="carritoTotal">$0.00</span>
-      </div>
-      <button class="btn btn-success btn-lg" onclick="irACheckout()" style="width:100%">
-        Proceder al Pago
-      </button>
-    </div>
-  </div>
-</section>
-
-<section class="seccion" id="seccion-checkout">
-  <div class="checkout-form">
-    <div class="checkout-card">
-      <button class="btn btn-ghost btn-sm" onclick="mostrarSeccion('carrito')" style="margin-bottom:1rem">
-        ← Volver al Carrito
-      </button>
-      <h3>Finalizar Compra</h3>
-      <p class="subtitle">Completa tus datos para procesar el pedido</p>
-      <form id="checkoutForm" onsubmit="return procesarCheckout(event)">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nombre Completo</label>
-            <input type="text" id="checkoutNombre" required>
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="checkoutEmail" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Dirección de Envío</label>
-          <textarea id="checkoutDireccion" required></textarea>
-        </div>
-        <div class="form-group">
-          <label>Número de Tarjeta</label>
-          <input type="text" id="checkoutTarjeta" maxlength="19" placeholder="1234 5678 9012 3456" required oninput="formatearTarjeta(this)">
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Fecha Exp.</label>
-            <input type="text" id="checkoutExp" maxlength="5" placeholder="MM/AA" required>
-          </div>
-          <div class="form-group">
-            <label>CVV</label>
-            <input type="text" id="checkoutCVV" maxlength="4" required>
-          </div>
-        </div>
-        <div class="checkout-resumen" id="checkoutResumen">
-          <h4>Resumen del Pedido</h4>
-          <div id="resumenItems"></div>
-          <div class="resumen-total">
-            <span>Total</span>
-            <span id="resumenTotal">$0.00</span>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-success btn-lg" id="checkoutBtn" style="width:100%;margin-top:1rem">
-          Confirmar Pedido
-        </button>
-      </form>
-      <div class="checkout-success" id="checkoutSuccess" style="display:none">
-        <span class="icon">✅</span>
-        <h3>¡Pedido Confirmado!</h3>
-        <p>Gracias por tu compra. Recibirás un email con los detalles.</p>
-        <div class="pedido-id" id="pedidoId">PED-XXXXX</div>
-        <button class="btn btn-primary" onclick="mostrarSeccion('catalogo')" style="margin-top:1rem">
-          Seguir Comprando
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="seccion" id="seccion-perfil">
-  <div class="checkout-form" style="max-width:500px">
-    <div class="checkout-card" style="text-align:center">
-      <div style="font-size:3rem;margin-bottom:0.5rem">👤</div>
-      <h3 id="perfilNombre">Usuario</h3>
-      <p class="subtitle" id="perfilEmail">email@ejemplo.com</p>
-      <p style="color:var(--text-secondary);font-size:0.85rem;margin:1rem 0" id="perfilRol">Rol: cliente</p>
-      <button class="btn btn-danger" onclick="cerrarSesion()">Cerrar Sesión</button>
-    </div>
-  </div>
-</section>
-
-<section class="seccion" id="seccion-login">
-  <div class="login-seccion">
-    <div class="login-card">
-      <div class="login-icon">🔐</div>
-      <h2>Iniciar Sesión</h2>
-      <p class="subtitle">Accede a tu cuenta para comprar</p>
-      <form onsubmit="return iniciarSesion(event)">
-        <div class="form-group">
-          <label>Usuario</label>
-          <input type="text" id="loginUsuario" required autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label>Contraseña</label>
-          <input type="password" id="loginPassword" required autocomplete="current-password">
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg" style="width:100%">Ingresar</button>
-      </form>
-      <div class="login-hint">
-        <strong>Demo:</strong> admin / admin · cliente / cliente
-      </div>
-      <div style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-secondary)">
-        ¿No tienes cuenta? <button class="btn btn-ghost btn-sm" onclick="mostrarSeccion('registro')" style="display:inline-flex">Registrarse</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="seccion" id="seccion-registro">
-  <div class="login-seccion">
-    <div class="login-card">
-      <div class="login-icon">📝</div>
-      <h2>Crear Cuenta</h2>
-      <p class="subtitle">Regístrate para empezar a comprar</p>
-      <form onsubmit="return registrarUsuario(event)">
-        <div class="form-group">
-          <label>Nombre Completo</label>
-          <input type="text" id="regNombre" required>
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="regEmail" required>
-        </div>
-        <div class="form-group">
-          <label>Usuario</label>
-          <input type="text" id="regUsuario" required minlength="3">
-        </div>
-        <div class="form-group">
-          <label>Contraseña</label>
-          <input type="password" id="regPassword" required minlength="6">
-        </div>
-        <div class="form-group">
-          <label>Confirmar Contraseña</label>
-          <input type="password" id="regPassword2" required minlength="6">
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg" style="width:100%">Crear Cuenta</button>
-      </form>
-      <div style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-secondary)">
-        ¿Ya tienes cuenta? <button class="btn btn-ghost btn-sm" onclick="mostrarSeccion('login')" style="display:inline-flex">Iniciar Sesión</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- === Servicios (from web_cursor) === -->
-<section class="seccion" id="seccion-servicios">
-  <div class="page servicios-page">
-    <div style="max-width:1200px;margin:0 auto;padding:0 2rem;">
-      <header class="page__header">
-        <span class="section-label">Servicios</span>
-        <h1 class="page__title">Soluciones para cada etapa de crecimiento</h1>
-        <p class="page__subtitle">
-          Desde el MVP hasta la plataforma enterprise. Cada servicio está diseñado
-          para integrarse con el resto de tu stack.
+  <main>
+    <section class="hero" id="inicio">
+      <div class="hero-grid" id="heroGrid"></div>
+      <div class="hero-content">
+        <span class="section-label" data-aos="fade-up">Desarrollo Web Profesional</span>
+        <h1 class="hero-title" data-aos="fade-up" data-aos-delay="100">
+        <span class="gradient-text">Creamos</span> experiencias<br>
+        digitales <span class="gradient-text">extraordinarias</span>
+        </h1>
+        <p class="hero-desc" data-aos="fade-up" data-aos-delay="200">
+          Fusionamos diseño, animación y tecnología para construir
+          productos web que cautivan y convierten.
         </p>
-      </header>
-
-      <div class="servicios-grid">
-        <div class="card card--elevated">
-          <h2 class="card__title">Desarrollo Frontend</h2>
-          <p class="card__description">Interfaces modernas con React, optimizadas para rendimiento y accesibilidad.</p>
-          <ul class="servicios-features">
-            <li>Componentes reutilizables</li>
-            <li>Design system</li>
-            <li>Testing automatizado</li>
-          </ul>
-        </div>
-        <div class="card card--elevated">
-          <h2 class="card__title">Arquitectura Cloud</h2>
-          <p class="card__description">Infraestructura que escala automáticamente según la demanda de tu aplicación.</p>
-          <ul class="servicios-features">
-            <li>CDN global</li>
-            <li>Auto-scaling</li>
-            <li>Monitoreo 24/7</li>
-          </ul>
-        </div>
-        <div class="card card--elevated">
-          <h2 class="card__title">API & Backend</h2>
-          <p class="card__description">Servicios robustos con APIs RESTful o GraphQL listas para integrarse.</p>
-          <ul class="servicios-features">
-            <li>Microservicios</li>
-            <li>Caché inteligente</li>
-            <li>Seguridad OWASP</li>
-          </ul>
-        </div>
-        <div class="card card--elevated">
-          <h2 class="card__title">DevOps & CI/CD</h2>
-          <p class="card__description">Pipelines automatizados para despliegues seguros y frecuentes.</p>
-          <ul class="servicios-features">
-            <li>GitHub Actions</li>
-            <li>Docker</li>
-            <li>Infraestructura como código</li>
-          </ul>
+        <div class="hero-actions" data-aos="fade-up" data-aos-delay="300">
+          <a href="#contacto" class="btn btn--primary">Contáctanos</a>
+          <a href="#proyectos" class="btn btn--ghost">Ver Proyectos</a>
         </div>
       </div>
-
-      <div class="servicios-cta">
-        <p>¿Necesitas algo a medida?</p>
-        <button class="btn btn-primary" onclick="mostrarSeccion('contacto')">Hablemos de tu proyecto</button>
+      <div class="hero-scroll" data-aos="fade-up" data-aos-delay="500">
+        <span>Desliza</span>
+        <div class="scroll-arrow">↓</div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- === Nosotros (from web_cursor) === -->
-<section class="seccion" id="seccion-nosotros">
-  <div class="page nosotros-page">
-    <div style="max-width:1024px;margin:0 auto;padding:0 2rem;">
-      <header class="page__header">
-        <span class="section-label">Nosotros</span>
-        <h1 class="page__title">Ingeniería web con visión de futuro</h1>
-        <p class="page__subtitle">
-          Somos un equipo apasionado por construir productos digitales que
-          no solo funcionan hoy, sino que están preparados para mañana.
-        </p>
-      </header>
+    <section class="stats" id="stats">
+      <div class="container">
+        <div class="stats-grid">
+          <div class="stat-card" data-aos="fade-up" data-aos-delay="0">
+            <div class="stat-value"><span class="counter" data-target="99.9">0</span>%</div>
+            <div class="stat-label">Uptime</div>
+          </div>
+          <div class="stat-card" data-aos="fade-up" data-aos-delay="100">
+            <div class="stat-value">&lt;<span class="counter" data-target="100">0</span>ms</div>
+            <div class="stat-label">Respuesta</div>
+          </div>
+          <div class="stat-card" data-aos="fade-up" data-aos-delay="200">
+            <div class="stat-value"><span class="counter" data-target="150">0</span>+</div>
+            <div class="stat-label">Proyectos</div>
+          </div>
+          <div class="stat-card" data-aos="fade-up" data-aos-delay="300">
+            <div class="stat-value">∞</div>
+            <div class="stat-label">Escalabilidad</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-      <div class="nosotros-mision">
-        <div class="card card--accent">
-          <h2 class="card__title">Nuestra misión</h2>
-          <p class="card__description">
-            Democratizar el acceso a arquitecturas web de clase enterprise.
-            Creemos que toda empresa, sin importar su tamaño, merece una
-            plataforma digital robusta, rápida y escalable.
+    <section class="services" id="servicios">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-label">Nuestros Servicios</span>
+          <h2 class="section-title">Soluciones <span class="gradient-text">completas</span></h2>
+          <p class="section-desc">
+            Desde landing pages hasta aplicaciones complejas, cubrimos
+            todo el espectro del desarrollo web.
           </p>
         </div>
+        <div class="services-grid">
+          <article class="service-card" data-aos="fade-up" data-aos-delay="0">
+            <div class="card-icon">🎨</div>
+            <h3 class="card-title">Diseño UI/UX</h3>
+            <p class="card-desc">Interfaces intuitivas y atractivas con enfoque en la experiencia de usuario.</p>
+            <ul class="card-features">
+              <li>Wireframes y prototipos</li>
+              <li>Design systems</li>
+              <li>Animaciones UI</li>
+            </ul>
+          </article>
+          <article class="service-card" data-aos="fade-up" data-aos-delay="100">
+            <div class="card-icon">⚡</div>
+            <h3 class="card-title">Desarrollo Frontend</h3>
+            <p class="card-desc">SPAs interactivas con animaciones fluidas y rendimiento óptimo.</p>
+            <ul class="card-features">
+              <li>HTML + CSS + JS</li>
+              <li>GSAP + ScrollTrigger</li>
+              <li>Rive + Canvas</li>
+            </ul>
+          </article>
+          <article class="service-card" data-aos="fade-up" data-aos-delay="200">
+            <div class="card-icon">🔧</div>
+            <h3 class="card-title">Backend & APIs</h3>
+            <p class="card-desc">Servidores robustos con Node.js, Express y bases de datos SQL/NoSQL.</p>
+            <ul class="card-features">
+              <li>REST APIs</li>
+              <li>Autenticación JWT</li>
+              <li>MySQL + JSON</li>
+            </ul>
+          </article>
+          <article class="service-card" data-aos="fade-up" data-aos-delay="300">
+            <div class="card-icon">📱</div>
+            <h3 class="card-title">Responsive & SEO</h3>
+            <p class="card-desc">Sitios adaptables a cualquier dispositivo con optimización para buscadores.</p>
+            <ul class="card-features">
+              <li>Mobile-first</li>
+              <li>SEO on-page</li>
+              <li>Performance</li>
+            </ul>
+          </article>
+        </div>
       </div>
+    </section>
 
-      <section class="nosotros-valores">
-        <h2 class="nosotros-section-title">Nuestros valores</h2>
-        <div class="nosotros-valores-grid">
-          <div class="card">
-            <h3 class="card__title">Simplicidad</h3>
-            <p class="card__description">Código claro y mantenible. Sin sobre-ingeniería.</p>
+    <section class="projects" id="proyectos">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-label">Nuestro Trabajo</span>
+          <h2 class="section-title">Proyectos <span class="gradient-text">destacados</span></h2>
+          <p class="section-desc">
+            Cada proyecto representa una fusión única de tecnología y creatividad.
+          </p>
+        </div>
+        <div class="projects-grid">
+          <article class="project-card" data-aos="fade-up" data-aos-delay="0">
+            <div class="project-img" style="--bg: var(--color-primary-muted)">
+              <span class="project-icon">⚡</span>
+            </div>
+            <div class="project-body">
+              <span class="project-tag">Node.js + MySQL</span>
+              <h3 class="project-title">ElectronicaStore</h3>
+              <p class="project-desc">Tienda online de componentes electrónicos con Express, MySQL y vanilla JS SPA.</p>
+              <div class="project-stack">
+                <span>Express</span><span>MySQL</span><span>SPA</span>
+              </div>
+            </div>
+          </article>
+          <article class="project-card" data-aos="fade-up" data-aos-delay="100">
+            <div class="project-img" style="--bg: var(--color-accent-muted)">
+              <span class="project-icon">◆</span>
+            </div>
+            <div class="project-body">
+              <span class="project-tag">C++17</span>
+              <h3 class="project-title">TechStore Server</h3>
+              <p class="project-desc">Servidor web en C++17 con httplib, glassmorphism y carrito server-side.</p>
+              <div class="project-stack">
+                <span>C++17</span><span>httplib</span><span>JSON</span>
+              </div>
+            </div>
+          </article>
+          <article class="project-card" data-aos="fade-up" data-aos-delay="200">
+            <div class="project-img" style="--bg: var(--color-success-muted)">
+              <span class="project-icon">◎</span>
+            </div>
+            <div class="project-body">
+              <span class="project-tag">GSAP + Rive</span>
+              <h3 class="project-title">ShopRive</h3>
+              <p class="project-desc">E-commerce con animaciones Rive canvas, GSAP ScrollTrigger y chatbot IA.</p>
+              <div class="project-stack">
+                <span>Rive</span><span>GSAP</span><span>PHP</span>
+              </div>
+            </div>
+          </article>
+          <article class="project-card" data-aos="fade-up" data-aos-delay="300">
+            <div class="project-img" style="--bg: var(--color-warning-muted)">
+              <span class="project-icon">◈</span>
+            </div>
+            <div class="project-body">
+              <span class="project-tag">React + tRPC</span>
+              <h3 class="project-title">ScaleWeb</h3>
+              <p class="project-desc">Landing page corporativa con React, design tokens y tipografía fluida.</p>
+              <div class="project-stack">
+                <span>React</span><span>TypeScript</span><span>Vite</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="about" id="nosotros">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-label">Quiénes Somos</span>
+          <h2 class="section-title">Nuestra <span class="gradient-text">visión</span></h2>
+          <p class="section-desc">
+            Combinamos años de experiencia en desarrollo web con pasión por la innovación.
+          </p>
+        </div>
+        <div class="about-grid">
+          <div class="about-mission" data-aos="fade-up" data-aos-delay="0">
+            <h3>Misión</h3>
+            <p>Transformar ideas en experiencias digitales memorables mediante código limpio, diseño cuidado y animaciones que cautivan.</p>
           </div>
-          <div class="card">
-            <h3 class="card__title">Rendimiento</h3>
-            <p class="card__description">Cada milisegundo cuenta para la experiencia del usuario.</p>
+          <div class="about-values" data-aos="fade-up" data-aos-delay="100">
+            <h3>Valores</h3>
+            <div class="values-grid">
+              <div class="value-item">
+                <span class="value-icon">🎯</span>
+                <span>Calidad</span>
+              </div>
+              <div class="value-item">
+                <span class="value-icon">💡</span>
+                <span>Innovación</span>
+              </div>
+              <div class="value-item">
+                <span class="value-icon">🤝</span>
+                <span>Colaboración</span>
+              </div>
+            </div>
           </div>
-          <div class="card">
-            <h3 class="card__title">Escalabilidad</h3>
-            <p class="card__description">Arquitectura que crece sin reescrituras costosas.</p>
+          <div class="about-team" data-aos="fade-up" data-aos-delay="200">
+            <h3>Equipo</h3>
+            <div class="team-stats">
+              <div class="team-stat">
+                <span class="team-stat-value">5+</span>
+                <span class="team-stat-label">Años</span>
+              </div>
+              <div class="team-stat">
+                <span class="team-stat-value">12</span>
+                <span class="team-stat-label">Miembros</span>
+              </div>
+              <div class="team-stat">
+                <span class="team-stat-value">8</span>
+                <span class="team-stat-label">Tech Stacks</span>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="nosotros-equipo">
-        <h2 class="nosotros-section-title">El equipo</h2>
-        <div class="nosotros-equipo-grid">
-          <div class="nosotros-stat">
-            <span class="nosotros-stat-count">12+</span>
-            <span class="nosotros-stat-role">Frontend</span>
-          </div>
-          <div class="nosotros-stat">
-            <span class="nosotros-stat-count">8+</span>
-            <span class="nosotros-stat-role">Backend</span>
-          </div>
-          <div class="nosotros-stat">
-            <span class="nosotros-stat-count">5+</span>
-            <span class="nosotros-stat-role">DevOps</span>
-          </div>
-          <div class="nosotros-stat">
-            <span class="nosotros-stat-count">150+</span>
-            <span class="nosotros-stat-role">Proyectos entregados</span>
-          </div>
+    <section class="contact" id="contacto">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-label">Contáctanos</span>
+          <h2 class="section-title">Hablemos de tu <span class="gradient-text">proyecto</span></h2>
+          <p class="section-desc">
+            Estamos listos para convertir tu idea en realidad.
+          </p>
         </div>
-      </section>
-    </div>
-  </div>
-</section>
-
-<!-- === Contacto (from web_cursor) === -->
-<section class="seccion" id="seccion-contacto">
-  <div class="page contacto-page">
-    <div style="max-width:768px;margin:0 auto;padding:0 2rem;">
-      <header class="page__header">
-        <span class="section-label">Contacto</span>
-        <h1 class="page__title">Hablemos de tu proyecto</h1>
-        <p class="page__subtitle">
-          Cuéntanos qué necesitas y te responderemos en menos de 24 horas.
-        </p>
-      </header>
-
-      <div class="contacto-layout">
-        <div class="card card--elevated contacto-form-card">
-          <form class="contacto-form" id="contactForm" onsubmit="return enviarContacto(event)">
-            <div class="contacto-field">
-              <label for="contactName">Nombre</label>
-              <input id="contactName" type="text" required placeholder="Tu nombre">
+        <div class="contact-grid" data-aos="fade-up">
+          <form class="contact-form" id="contactForm" novalidate>
+            <div class="form-group">
+              <label for="name">Nombre</label>
+              <input type="text" id="name" class="form-input" required placeholder="Tu nombre">
+              <span class="form-error">Campo requerido</span>
             </div>
-            <div class="contacto-field">
-              <label for="contactEmail">Email</label>
-              <input id="contactEmail" type="email" required placeholder="tu@email.com">
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" class="form-input" required placeholder="tu@email.com">
+              <span class="form-error">Email inválido</span>
             </div>
-            <div class="contacto-field">
-              <label for="contactCompany">Empresa</label>
-              <input id="contactCompany" type="text" placeholder="Nombre de tu empresa">
+            <div class="form-group">
+              <label for="message">Mensaje</label>
+              <textarea id="message" class="form-input" required placeholder="Cuéntanos sobre tu proyecto..." rows="5"></textarea>
+              <span class="form-error">Campo requerido</span>
             </div>
-            <div class="contacto-field">
-              <label for="contactMessage">Mensaje</label>
-              <textarea id="contactMessage" required rows="5" placeholder="Cuéntanos sobre tu proyecto..."></textarea>
+            <button type="submit" class="btn btn--primary btn--full">
+              Enviar Mensaje
+            </button>
+            <div class="contact-success" id="contactSuccess">
+              <span class="contact-success-icon">✓</span>
+              <p>Mensaje enviado con éxito. Te responderemos pronto.</p>
             </div>
-            <button type="submit" class="btn btn-primary btn-lg">Enviar mensaje</button>
           </form>
-          <div class="contacto-success" id="contactSuccess" style="display:none">
-            <span class="contacto-success-icon">✓</span>
-            <h2>¡Mensaje enviado!</h2>
-            <p>Gracias por contactarnos. Te responderemos pronto.</p>
-            <button class="btn btn-outline" onclick="resetContactForm()">Enviar otro mensaje</button>
+          <div class="contact-info" data-aos="fade-up" data-aos-delay="100">
+            <div class="contact-info-item">
+              <span class="contact-info-icon">✉</span>
+              <div>
+                <strong>Email</strong>
+                <span>hola@webmerge.studio</span>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <span class="contact-info-icon">⌂</span>
+              <div>
+                <strong>Ubicación</strong>
+                <span>Buenos Aires, Argentina</span>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <span class="contact-info-icon">🕐</span>
+              <div>
+                <strong>Horario</strong>
+                <span>Lun - Vie 9:00 - 18:00</span>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+    </section>
+  </main>
 
-        <aside class="contacto-info">
-          <div class="contacto-info-item">
-            <h3>Email</h3>
-            <a href="mailto:hello@techstore.com">hello@techstore.com</a>
-          </div>
-          <div class="contacto-info-item">
-            <h3>Ubicación</h3>
-            <p>Madrid, España · Remoto worldwide</p>
-          </div>
-          <div class="contacto-info-item">
-            <h3>Horario</h3>
-            <p>Lun – Vie, 9:00 – 18:00 CET</p>
-          </div>
-        </aside>
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="nav-logo-icon">◆</span>
+          <span class="nav-logo-text">WebMerge<span class="text-accent">Studio</span></span>
+        </div>
+        <p class="footer-desc">
+          Fusionamos diseño, animación y tecnología para construir el futuro de la web.
+        </p>
+        <div class="footer-social">
+          <a href="#" class="social-link" title="GitHub">◆</a>
+          <a href="#" class="social-link" title="LinkedIn">◈</a>
+          <a href="#" class="social-link" title="Twitter">◎</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 WebMerge Studio. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <button class="back-to-top" id="backToTop" title="Volver arriba">↑</button>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="chatbot" id="chatbot">
+    <button class="chatbot-toggle" id="chatbotToggle" title="Chat">💬</button>
+    <div class="chatbot-window" id="chatbotWindow">
+      <div class="chatbot-header">
+        <span>Asistente WebMerge</span>
+        <button class="chatbot-close" id="chatbotClose">✕</button>
+      </div>
+      <div class="chatbot-body" id="chatbotBody">
+        <div class="chatbot-msg chatbot-msg--bot">
+          ¡Hola! Soy el asistente de WebMerge Studio. ¿En qué puedo ayudarte?
+        </div>
+      </div>
+      <div class="chatbot-input">
+        <input type="text" id="chatbotInput" placeholder="Escribe un mensaje...">
+        <button id="chatbotSend">→</button>
       </div>
     </div>
   </div>
-</section>
 
-<footer class="footer">
-  <div class="footer-content">
-    <div class="footer-brand">
-      <div class="footer-logo"><span>◆</span> TechStore Fusion</div>
-      <p class="footer-tagline">
-        Arquitectura web diseñada para crecer contigo, desde el primer usuario hasta millones.
-        Proyecto mergeado: tienda C++ + animaciones GSAP + animaciones Rive + diseño ScaleWeb.
-      </p>
-    </div>
-    <div class="footer-col">
-      <h4>Producto</h4>
-      <a href="#" onclick="mostrarSeccion('servicios');return false">Servicios</a>
-      <a href="#" onclick="mostrarSeccion('catalogo');return false">Productos</a>
-      <a href="#" onclick="mostrarSeccion('contacto');return false">Precios</a>
-    </div>
-    <div class="footer-col">
-      <h4>Empresa</h4>
-      <a href="#" onclick="mostrarSeccion('nosotros');return false">Nosotros</a>
-      <a href="#" onclick="mostrarSeccion('contacto');return false">Contacto</a>
-      <a href="#" onclick="mostrarSeccion('catalogo');return false">Blog</a>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <p>© 2026 TechStore Fusion — Proyecto Merge: tienda C++ + animaciones GSAP + animaciones Rive + ScaleWeb</p>
-  </div>
-</footer>
-
-<button class="back-to-top" id="backToTop" aria-label="Volver arriba">↑</button>
-
-<button class="chatbot-btn" id="chatbotToggle">💬</button>
-<div class="chat-window" id="chatWindow">
-  <div class="chat-header">
-    <h4>💬 Chat de Ayuda</h4>
-    <button class="chat-close" id="chatClose">✕</button>
-  </div>
-  <div class="chat-messages" id="chatMessages">
-    <div class="chat-msg bot">¡Hola! Soy el asistente virtual. Pregúntame sobre productos, precios, envíos o garantías.</div>
-  </div>
-  <div class="chat-input-area">
-    <input type="text" id="chatInput" placeholder="Escribe tu mensaje..." onkeypress="if(event.key==='Enter') enviarChat()">
-    <button onclick="enviarChat()">Enviar</button>
-  </div>
-</div>
-
-<div class="toast-container" id="toastContainer"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script src="https://unpkg.com/@rive-app/canvas@2.0.28/dist/rive.min.js"></script>
-<script src="/js/main.js"></script>
-<script src="/js/animations.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>

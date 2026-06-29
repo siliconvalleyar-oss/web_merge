@@ -1,16 +1,13 @@
 {
   "name": "web-merge-final",
-  "version": "1.1.0",
-  "description": "Proyecto mergeado: tienda C++ + animaciones GSAP + animaciones Rive",
+  "version": "2.0.0",
+  "description": "WebMerge Studio - Single Page Website",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node server.js"
   },
   "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.5",
-    "express": "^4.21.0",
-    "uuid": "^10.0.0"
+    "express": "^4.18.2"
   }
 }
