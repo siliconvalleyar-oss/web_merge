@@ -68,6 +68,12 @@ data/webmerge.db       → Base de datos SQLite
 - Mata proceso anterior en el puerto antes de iniciar.
 - Limpia procesos Chrome stale de WhatsApp.
 
+## 11. HISTORY.md
+- Todo cambio significativo debe registrarse en `HISTORY.md`.
+- Entrada con formato: `vX.Y.Z (YYYY-MM-DD) — Descripción del cambio`.
+- Agrupar cambios por versión, con bullet points por modificación.
+- Mantener al día antes de cada push.
+
 ## 10. Commits y Push
 - Commits descriptivos en inglés o español, con prefijo semántico (`feat:`, `fix:`, `chore:`, `refactor:`).
 - Pushear a la branch `feat/single-page-v2`.
