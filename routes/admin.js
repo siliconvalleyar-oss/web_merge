@@ -408,7 +408,7 @@ router.get('/menu-options', authMiddleware, (req, res) => {
   }
 });
 
-router.post('/menu-options', authMiddleware, roleMiddleware('master'), (req, res) => {
+router.post('/menu-options', authMiddleware, (req, res) => {
   try {
     const { parent_key, sort_order, trigger_key, icon, label, response_type, response_text, enabled } = req.body;
     if (!trigger_key || !label) return res.status(400).json({ error: 'trigger_key y label son obligatorios' });
@@ -421,7 +421,7 @@ router.post('/menu-options', authMiddleware, roleMiddleware('master'), (req, res
   }
 });
 
-router.put('/menu-options/:id', authMiddleware, roleMiddleware('master'), (req, res) => {
+router.put('/menu-options/:id', authMiddleware, (req, res) => {
   try {
     const { parent_key, sort_order, trigger_key, icon, label, response_type, response_text, enabled } = req.body;
     db.prepare(
@@ -433,7 +433,7 @@ router.put('/menu-options/:id', authMiddleware, roleMiddleware('master'), (req, 
   }
 });
 
-router.delete('/menu-options/:id', authMiddleware, roleMiddleware('master'), (req, res) => {
+router.delete('/menu-options/:id', authMiddleware, (req, res) => {
   try {
     db.prepare('DELETE FROM menu_options WHERE id = ?').run(req.params.id);
     res.json({ success: true });
