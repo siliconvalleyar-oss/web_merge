@@ -263,10 +263,84 @@ tr:hover td{background:rgba(108,92,231,.03)}
 /* ── Responsive ──────────────────────────────────────────── */
 @media(max-width:768px){
   .login-card{padding:24px 16px}
-  .admin-header{padding:10px 16px}
-  .admin-content,.admin-tabs{padding:0 12px}
-  .tab{padding:10px 12px;font-size:12px}
+  .admin-header{padding:10px 12px}
+  .admin-header h2{font-size:15px}
+  .admin-header-right{gap:8px}
+  .user-badge{font-size:11px;display:none}
+  
+  .admin-layout{flex-direction:column;min-height:auto}
+  .admin-sidebar{
+    width:100%;min-width:auto;flex-direction:row;overflow-x:auto;
+    border-right:none;border-bottom:1px solid var(--admin-border);
+    padding:4px 0;-webkit-overflow-scrolling:touch;
+    gap:0;position:sticky;top:53px;z-index:99;background:var(--admin-sidebar);
+  }
+  .admin-sidebar::-webkit-scrollbar{height:0;display:none}
+  .tab{
+    padding:10px 14px;border-left:none;border-bottom:3px solid transparent;
+    white-space:nowrap;flex-shrink:0;font-size:12px;
+  }
+  .tab.active{border-left:none;border-bottom-color:var(--admin-accent)}
+  
+  .admin-content{padding:12px;overflow-y:visible}
+  .tab-header h3{font-size:18px}
+  .tab-header{margin-bottom:16px;padding-bottom:12px}
+  
   .config-grid{grid-template-columns:1fr}
-  .wa-layout{flex-direction:column;height:auto}
-  .wa-sidebar{width:100%;min-width:auto;border-left:none;border-bottom:1px solid #2d2d44}
+  
+  .table-wrap{overflow-x:auto;margin:0 -4px}
+  table{font-size:13px}
+  th,td{padding:8px 10px}
+  
+  /* WhatsApp mobile */
+  .wa-layout{flex-direction:column;height:auto;border-radius:8px}
+  .wa-sidebar{width:100%;min-width:auto;border-left:none;border-bottom:1px solid #2d2d44;max-height:200px}
+  .wa-main{min-height:50vh}
+  .wa-messages{padding:12px 14px}
+  .wa-msg{max-width:90%;font-size:12px}
+  .wa-main-header{font-size:13px;padding:10px 14px;flex-wrap:wrap;gap:6px}
+  .wa-main-header .wa-actions{gap:4px}
+  .wa-btn{padding:3px 8px;font-size:11px}
+  .wa-conv-number{font-size:13px}
+  .wa-send-input{font-size:14px} /* prevent iOS zoom */
+  
+  /* Modals full width */
+  .modal-content{margin:12px;max-width:none;padding:16px}
+  .modal-header h3{font-size:16px}
+  
+  /* Tree menu */
+  .tree-children{padding-left:20px}
+  .node-label{font-size:12px}
+  .node-trigger{font-size:10px}
+  .node-actions{opacity:1}
+  .btn-icon{font-size:16px;padding:4px 6px} /* bigger touch target */
+  
+  /* Palette */
+  .palette-item{min-width:80px;padding:8px 10px}
+  .palette-swatches span{width:16px;height:16px}
+  .palette-item-name{font-size:10px}
+  
+  /* Form */
+  .form-row{flex-direction:column;gap:8px}
+  
+  /* Buttons */
+  .btn,.btn-sm{padding:10px 16px;font-size:14px;min-height:44px} /* touch-friendly */
+  .btn-sm{padding:8px 14px;min-height:38px}
+}
+
+@media(max-width:480px){
+  .admin-header h2{font-size:13px}
+  .title-role{display:none}
+  .tab{padding:8px 10px;font-size:11px}
+  .admin-content{padding:8px}
+  .tab-header{flex-direction:column;align-items:flex-start;gap:8px}
+  .tab-header h3{font-size:16px}
+  table{font-size:12px}
+  th,td{padding:6px 8px}
+  .modal-content{padding:12px;margin:8px}
+  .config-grid{grid-template-columns:1fr}
+  .wa-layout{border-radius:6px}
+  .wa-sidebar{max-height:150px}
+  .node-actions .btn-icon{font-size:14px;padding:3px 5px}
+  .whatsapp-pair-area{max-width:100%}
 }
