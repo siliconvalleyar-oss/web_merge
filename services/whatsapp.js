@@ -1,11 +1,23 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const db = require('../database/db');
-const rag = require('./rag');
 const { execSync } = require('child_process');
 
 let client = null;
 let qrCode = null;
 let status = 'disconnected';
+
+const MENU = `👋 *Hola! Soy el contestador automático de Leo*
+
+Elegí una opción:
+
+1️⃣ *Catálogo de productos*
+2️⃣ *Comprar*
+3️⃣ *Consultar precio*
+4️⃣ *Hablar con un asesor*
+5️⃣ *Sucursales*
+0️⃣ *Menu principal*
+
+Respondé con el número de la opción que te interese.`;
 
 function findChrome() {
   const candidates = [
@@ -18,6 +30,24 @@ function findChrome() {
     try { execSync(`test -x ${p}`); return p; } catch {}
   }
   return null;
+}
+
+function getMenuResponse(option) {
+  const opt = option.replace(/[^0-9]/g, '');
+  switch (opt) {
+    case '1':
+      return '📋 *Catálogo*\n\nPodés ver nuestros productos en:\nhttps://electronica-store.example.com/catalogo\n\nO envianos "comprar" para mas opciones.';
+    case '2':
+      return '🛒 *Comprar*\n\nPara realizar una compra:\n1. Elegí el producto del catálogo\n2. Consultá disponibilidad\n3. Coordinamos entrega\n\nEscribí el nombre del producto que buscas.';
+    case '3':
+      return '💰 *Consultar precio*\n\nDecime qué producto te interesa y te paso el precio actualizado.';
+    case '4':
+      return '👤 *Hablar con un asesor*\n\nDejanos tu consulta y en breve te responderemos.';
+    case '5':
+      return '📍 *Sucursales*\n\nAv. Siempre Viva 123, Centro\nLun a Vie 9:00-18:00\nSáb 9:00-13:00';
+    default:
+      return MENU;
+  }
 }
 
 async function initWhatsApp() {
@@ -44,7 +74,6 @@ async function initWhatsApp() {
     qrCode = null;
     console.log('✅ WhatsApp conectado');
     console.log('  📬 Esperando mensajes...');
-    console.log('  💡 Enviá un mensaje al número vinculado para probar');
   });
 
   client.on('disconnected', reason => {
@@ -62,7 +91,7 @@ async function initWhatsApp() {
 
       const rawFrom = msg.from || '';
       const userNumber = rawFrom.replace(/@c\.us$/, '');
-      const userQuery = (msg.body || '').trim();
+      const userQuery = (msg.body || '').trim().toLowerCase();
 
       console.log(`  📩 [${source}] WhatsApp msg de ${userNumber}: "${userQuery.substring(0, 60)}"`);
 
@@ -71,12 +100,17 @@ async function initWhatsApp() {
         return;
       }
 
-      const { found, answer } = rag.getAnswer(userQuery);
       let response;
-      if (found && answer) {
-        response = answer;
+      if (/^[0-9]+$/.test(userQuery)) {
+        response = getMenuResponse(userQuery);
+      } else if (userQuery === 'menu' || userQuery === 'hola' || userQuery === 'buenas' || userQuery.includes('menu')) {
+        response = MENU;
       } else {
-        response = '🤖 Hola, soy el bot de WebMerge Studio.\n\nNo encontré información específica sobre tu consulta. ¿Podés reformularla o escribirme con otras palabras?\n\nTambién podés consultar nuestra web: https://webmerge.studio';
+        response = `🤖 *Contestador automático de Leo*
+
+Gracias por tu consulta. Un asesor te responderá a la brevedad.
+
+Mientras tanto, escribí *menu* para ver las opciones disponibles.`;
       }
 
       await msg.reply(response);
