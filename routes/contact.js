@@ -6,6 +6,7 @@ const router = express.Router();
 router.post('/', (req, res) => {
   try {
     const { name, email, message } = req.body;
+    console.log('  📝 Contact form:', { name, email, message });
     if (!name || !email || !message) {
       return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }

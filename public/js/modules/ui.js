@@ -72,6 +72,7 @@ const UI = {
         if (f.name === 'email') data.email = f.value;
         if (f.name === 'message') data.message = f.value;
       });
+      console.log('📤 Enviando formulario:', data);
       try {
         const res = await fetch('/api/contact', {
           method: 'POST',
