@@ -129,6 +129,15 @@ router.post('/whatsapp-stop', authMiddleware, async (req, res) => {
   }
 });
 
+router.post('/whatsapp-start', authMiddleware, async (req, res) => {
+  try {
+    await whatsapp.initWhatsApp();
+    res.json({ success: true, status: 'starting' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/whatsapp-messages', authMiddleware, (req, res) => {
   try {
     const messages = whatsapp.getMessages();
@@ -168,6 +177,15 @@ router.put('/whatsapp-conversation/:number/read', authMiddleware, (req, res) => 
 router.put('/whatsapp-conversation/:number/unread', authMiddleware, (req, res) => {
   try {
     whatsapp.markConversationUnread(req.params.number);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/whatsapp-conversation/:number', authMiddleware, async (req, res) => {
+  try {
+    await whatsapp.deleteConversation(req.params.number);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

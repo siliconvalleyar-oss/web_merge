@@ -79,17 +79,30 @@ const adminConfigDefaults = [
   ['admin_text',    '#e8e8f0'],
   ['admin_border',  '#2d2d44'],
   ['admin_surface', '#1a1a2e'],
+  ['carousel_overlay_opacity', '0.5'],
 ];
 const insertConfig = db.prepare('INSERT OR IGNORE INTO config (config_key, config_value) VALUES (?, ?)');
 for (const [k, v] of adminConfigDefaults) insertConfig.run(k, v);
 
 const app = express();
 const PORT = config.PORT;
+const fs = require('fs');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/assets/carrusel', express.static(path.join(__dirname, 'assets/carrusel')));
 
+app.get('/api/carrusel/images', (req, res) => {
+  try {
+    const dir = path.join(__dirname, 'assets/carrusel');
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.png')).sort();
+    const images = files.map(f => `/assets/carrusel/${f}`);
+    res.json(images);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 app.use('/api/faqs',   require('./routes/faqs'));
 app.use('/api/config', require('./routes/config'));
 app.use('/api/contact',require('./routes/contact'));

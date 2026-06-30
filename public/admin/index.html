@@ -36,7 +36,7 @@
     <div id="dashboardView" class="view hidden">
       <header class="admin-header">
         <div class="admin-header-inner">
-          <h2>⚡ Panel de Control</h2>
+          <h2>⚡ Panel de Control <span id="userTitleRole" class="title-role"></span></h2>
           <div class="admin-header-right">
             <span id="userBadge" class="user-badge"></span>
             <button id="logoutBtn" class="btn btn-sm">Salir</button>
@@ -52,7 +52,7 @@
           <button class="tab" data-tab="clients">Clientes</button>
           <button class="tab" data-tab="products">Productos</button>
           <button class="tab" data-tab="users">Usuarios</button>
-          <button class="tab" data-tab="whatsapp">WhatsApp <span class="badge-msg" style="display:none"></span></button>
+          <button class="tab" data-tab="whatsapp">WhatsApp <span class="wa-dot"></span> <span class="badge-msg" style="display:none"></span></button>
         </nav>
 
         <main class="admin-content">
@@ -106,6 +106,13 @@
               <div class="form-group">
                 <label>Color de texto</label>
                 <input type="color" name="text_color" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Opacidad overlay carrusel</label>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="range" name="carousel_overlay_opacity" min="0" max="1" step="0.05" class="form-input" style="flex:1;padding:4px" oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
+                  <span style="font-size:13px;color:#9999aa;min-width:36px">0.50</span>
+                </div>
               </div>
               <div class="form-group">
                 <label>Nombre del sitio</label>
@@ -225,7 +232,10 @@
         <section id="tabWhatsapp" class="tab-content">
           <div class="tab-header">
             <h3>WhatsApp Bot</h3>
-            <button id="waStopBtn" class="btn btn-sm btn-danger" style="display:none;">⏹ Detener</button>
+            <div>
+              <button id="waStartBtn" class="btn btn-sm" style="display:none;">🔌 Conectar</button>
+              <button id="waStopBtn" class="btn btn-sm btn-danger" style="display:none;">⏹ Detener</button>
+            </div>
           </div>
           <div id="whatsappStatus" class="whatsapp-status"></div>
           <div id="whatsappQr" class="whatsapp-qr"></div><div id="whatsappLayout" class="wa-layout">

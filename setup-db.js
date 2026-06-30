@@ -97,6 +97,7 @@ const configDefaults = [
   ['chatbot_name',    'WebBot'],
   ['chatbot_greeting','Hola, soy WebBot. ¿En qué puedo ayudarte?'],
   ['faq_categories',  'general,tecnico,proceso,soporte'],
+  ['carousel_overlay_opacity', '0.5'],
   ['admin_bg',        '#0a0a14'],
   ['admin_sidebar',   '#141425'],
   ['admin_accent',    '#6c5ce7'],

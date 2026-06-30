@@ -37,6 +37,7 @@ $('loginForm').addEventListener('submit', async e => {
     TOKEN = data.token;
     USER = data.user;
     $('userBadge').textContent = `${data.user.username} (${roleLabel(data.user.role)})`;
+    $('userTitleRole').textContent = `— ${data.user.username} (${roleLabel(data.user.role)})`;
     showView('dashboardView');
     loadDashboard();
   } else {
@@ -245,6 +246,11 @@ async function loadConfig() {
           else el.value = value;
         }
       });
+      const range = document.querySelector('[name="carousel_overlay_opacity"]');
+      if (range) {
+        const display = range.nextElementSibling;
+        if (display) display.textContent = parseFloat(range.value).toFixed(2);
+      }
     }
   } catch {}
   loadAdminConfig();
@@ -662,7 +668,13 @@ async function loadWhatsApp() {
                    status.status === 'disconnected' ? '❌ Desconectado' :
                    '⚠ Error';
 
+  const dot = document.querySelector('.wa-dot');
+  if (dot) {
+    dot.className = 'wa-dot' + (status.status === 'connected' || status.status === 'qr_ready' || status.status === 'disconnected' ? ' ' + status.status : '');
+  }
+
   $('waStopBtn').style.display = status.status === 'connected' || status.status === 'qr_ready' ? 'inline-block' : 'none';
+  $('waStartBtn').style.display = status.status === 'disconnected' || status.status === 'error' ? 'inline-block' : 'none';
 
   if (status.qrCode) {
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(status.qrCode)}&size=260x260`;
@@ -678,6 +690,13 @@ $('waStopBtn').addEventListener('click', async () => {
   if (!confirm('¿Detener WhatsApp?')) return;
   await api('/whatsapp-stop', { method: 'POST' });
   loadWhatsApp();
+});
+
+$('waStartBtn').addEventListener('click', async () => {
+  $('waStartBtn').disabled = true;
+  $('waStartBtn').textContent = '⏳ Conectando...';
+  await api('/whatsapp-start', { method: 'POST' });
+  setTimeout(loadWhatsApp, 2000);
 });
 
 async function loadConversations() {
@@ -723,6 +742,7 @@ async function openConversation(number) {
     <div class="wa-actions">
       <button class="wa-btn read" onclick="markRead('${number}')">✓ Leído</button>
       <button class="wa-btn unread" onclick="markUnread('${number}')">✗ No leído</button>
+      <button class="wa-btn" style="color:#e17055;border-color:#e17055" onclick="deleteConversation('${number}')">🗑 Eliminar</button>
     </div>
   `;
 
@@ -777,6 +797,15 @@ async function markUnread(number) {
   loadConversations();
 }
 
+async function deleteConversation(number) {
+  if (!confirm('¿Eliminar todos los mensajes de esta conversación?')) return;
+  await api(`/whatsapp-conversation/${encodeURIComponent(number)}`, { method: 'DELETE' });
+  currentConv = null;
+  $('waMainHeader').innerHTML = '<span>Seleccioná una conversación</span>';
+  $('waMessages').innerHTML = '<div class="wa-empty">Haz clic en una conversación para ver los mensajes</div>';
+  loadConversations();
+}
+
 function startWhatsAppPolling() {
   stopWhatsAppPolling();
   WHATSAPP_POLLER = setInterval(() => {
@@ -810,6 +839,7 @@ function showToast(msg) {
         TOKEN = saved;
         USER = data.user;
         $('userBadge').textContent = `${data.user.username} (${roleLabel(data.user.role)})`;
+        $('userTitleRole').textContent = `— ${data.user.username} (${roleLabel(data.user.role)})`;
         showView('dashboardView');
         loadDashboard();
         return;

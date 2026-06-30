@@ -258,4 +258,24 @@ async function stopWhatsApp() {
   console.log('🛑 WhatsApp detenido');
 }
 
-module.exports = { initWhatsApp, stopWhatsApp, getStatus, getMessages, getConversations, getConversationMessages, markConversationRead, markConversationUnread, sendMessage };
+async function deleteConversation(number) {
+  try {
+    db.prepare('DELETE FROM whatsapp_messages WHERE number = ?').run(number);
+    if (client) {
+      try {
+        const chatId = number.includes('@c.us') ? number : `${number}@c.us`;
+        const chat = await client.getChatById(chatId);
+        await chat.delete();
+        console.log(`  🗑 Conversación eliminada de WhatsApp: ${number}`);
+      } catch (e) {
+        console.log(`  ↪ No se pudo eliminar de WhatsApp (chat no encontrado): ${number}`);
+      }
+    }
+    return true;
+  } catch (err) {
+    console.error('Error deleting conversation:', err.message);
+    return false;
+  }
+}
+
+module.exports = { initWhatsApp, stopWhatsApp, getStatus, getMessages, getConversations, getConversationMessages, markConversationRead, markConversationUnread, sendMessage, deleteConversation };
