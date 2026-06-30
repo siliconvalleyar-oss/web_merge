@@ -280,8 +280,9 @@ tr:hover td{background:rgba(108,92,231,.03)}
   }
   .admin-sidebar::-webkit-scrollbar{height:0;display:none}
   .tab{
+    display:inline-flex;width:auto;flex-shrink:0;
     padding:10px 14px;border-left:none;border-bottom:3px solid transparent;
-    white-space:nowrap;flex-shrink:0;font-size:12px;
+    white-space:nowrap;font-size:12px;
   }
   .tab.active{border-left:none;border-bottom-color:var(--admin-accent)}
   
