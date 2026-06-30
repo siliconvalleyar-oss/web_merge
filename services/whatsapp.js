@@ -6,6 +6,7 @@ const path = require('path');
 
 let client = null;
 let qrCode = null;
+let pairingCode = null;
 let status = 'disconnected';
 
 /* ── Build menu from DB ─────────────────────────────── */
@@ -139,6 +140,7 @@ async function initWhatsApp() {
 
   client.on('qr', qr => {
     qrCode = qr;
+    pairingCode = null;
     status = 'qr_ready';
     console.log('📱 WhatsApp QR ready — escanea con tu teléfono');
   });
@@ -146,6 +148,7 @@ async function initWhatsApp() {
   client.on('ready', () => {
     status = 'connected';
     qrCode = null;
+    pairingCode = null;
     console.log('✅ WhatsApp conectado');
     console.log('  📬 Esperando mensajes...');
   });
@@ -234,7 +237,7 @@ Mientras tanto, escribí *menu* para ver las opciones disponibles.`;
 }
 
 function getStatus() {
-  return { status, qrCode: status === 'qr_ready' ? qrCode : null };
+  return { status, qrCode: status === 'qr_ready' ? qrCode : null, pairingCode: status === 'qr_ready' ? pairingCode : null };
 }
 
 function getMessages(limit = 50) {
@@ -351,6 +354,7 @@ async function resetSession() {
     }
     status = 'disconnected';
     qrCode = null;
+    pairingCode = null;
     console.log('🔄 Sesión WhatsApp reseteada — escaneá el QR con otro número');
     return true;
   } catch (err) {
@@ -359,4 +363,21 @@ async function resetSession() {
   }
 }
 
-module.exports = { initWhatsApp, stopWhatsApp, getStatus, getMessages, getConversations, getConversationMessages, markConversationRead, markConversationUnread, sendMessage, deleteConversation, resetSession };
+async function generatePairingCode(phoneNumber) {
+  try {
+    if (!client) {
+      throw new Error('WhatsApp cliente no iniciado. Primero conectá.');
+    }
+    // Clean the phone number: remove +, spaces, dashes
+    const cleanNumber = phoneNumber.replace(/[+\-\s]/g, '');
+    const code = await client.generatePairingCode(cleanNumber);
+    pairingCode = code;
+    console.log(`🔗 Código de vinculación generado para ${cleanNumber}: ${code}`);
+    return code;
+  } catch (err) {
+    console.error('Error generating pairing code:', err.message);
+    throw err;
+  }
+}
+
+module.exports = { initWhatsApp, stopWhatsApp, getStatus, getMessages, getConversations, getConversationMessages, markConversationRead, markConversationUnread, sendMessage, deleteConversation, resetSession, generatePairingCode };

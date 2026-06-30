@@ -235,15 +235,8 @@
             <h3>Menú WhatsApp Bot</h3>
             <button id="addMenuItemBtn" class="btn btn-primary btn-sm">+ Nueva opción</button>
           </div>
-          <p style="color:#999;margin-bottom:16px;font-size:14px">Personalizá las opciones del menú interactivo del bot de WhatsApp. Las opciones se agrupan por <code>parent_key</code>: vacío = menú principal, <code>a</code> = submenú Servicios, <code>c</code> = submenú Tienda.</p>
-          <div class="table-wrap">
-            <table id="menuTable">
-              <thead><tr>
-                <th>Orden</th><th>Trigger</th><th>Icono</th><th>Etiqueta</th><th>Tipo</th><th>Padre</th><th>Estado</th><th>Acciones</th>
-              </tr></thead>
-              <tbody id="menuBody"></tbody>
-            </table>
-          </div>
+          <p style="color:#999;margin-bottom:16px;font-size:14px">Personalizá las opciones del menú interactivo del bot. Hacé clic sobre cualquier nodo para editarlo.</p>
+          <div id="menuTree" class="menu-tree"></div>
         </section>
 
         <!-- WhatsApp Tab -->
@@ -257,7 +250,18 @@
             </div>
           </div>
           <div id="whatsappStatus" class="whatsapp-status"></div>
-          <div id="whatsappQr" class="whatsapp-qr"></div><div id="whatsappLayout" class="wa-layout">
+          <div id="whatsappQr" class="whatsapp-qr"></div>
+          <div id="whatsappPairArea" class="whatsapp-pair-area" style="display:none">
+            <div class="pair-box">
+              <label style="font-size:13px;color:#999;margin-bottom:6px;display:block">O vinculá por código:</label>
+              <div style="display:flex;gap:8px">
+                <input type="text" id="pairPhone" class="form-input" placeholder="5491122334455" style="flex:1">
+                <button id="pairBtn" class="btn btn-sm" style="border-color:#6c5ce7;color:#a78bfa">🔗 Vincular</button>
+              </div>
+              <div id="pairCode" class="pair-code" style="display:none"></div>
+            </div>
+          </div>
+          <div id="whatsappLayout" class="wa-layout">
             <div class="wa-sidebar" id="waSidebar">
               <div class="wa-sidebar-header">
                 <h4>Conversaciones</h4>

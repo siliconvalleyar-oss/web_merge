@@ -203,6 +203,10 @@ tr:hover td{background:rgba(108,92,231,.03)}
 .wa-btn-send{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer}
 .wa-btn-send:hover{background:#5a4bd1}
 
+.whatsapp-pair-area{margin:12px 0 16px;max-width:420px}
+.pair-box{background:#1a1a2e;border:1px solid #2d2d44;border-radius:10px;padding:14px}
+.pair-code{animation:fadeInUp .3s}
+
 /* ── Role badges ───────────────────────────────────────────── */
 .role-badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
 .role-master{background:rgba(255,107,107,.15);color:#ff6b6b;border:1px solid #ff6b6b}
@@ -211,6 +215,50 @@ tr:hover td{background:rgba(108,92,231,.03)}
 
 /* ── Products table ────────────────────────────────────────── */
 #productsTable td:nth-child(2){font-family:monospace;font-weight:600;color:#00cec9}
+
+/* ── Menu Tree (flow diagram) ─────────────────────────────── */
+.menu-tree{padding:8px 0}
+.tree-root{border:1px solid #2d2d44;border-radius:12px;padding:12px;background:rgba(10,10,20,.4)}
+.tree-node{position:relative;margin:4px 0}
+.tree-node.root>.node-content{background:linear-gradient(135deg,#6c5ce722,#00cec922);border-color:#6c5ce7;border-radius:10px;padding:10px 16px;margin-bottom:8px}
+.tree-node.root>.node-content .node-label{font-size:15px;font-weight:700;color:#e8e8f0}
+.tree-children{padding-left:32px;position:relative}
+.tree-children::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:2px;background:#2d2d44;border-radius:1px}
+.node-content{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;
+  padding:8px 12px;cursor:pointer;transition:all .2s;
+  position:relative;
+}
+.node-content:hover{background:#222240;border-color:#6c5ce766}
+.tree-node:not(.root)>.node-content::before{
+  content:'';position:absolute;left:-18px;top:50%;width:14px;height:2px;background:#2d2d44;
+}
+.node-main{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.node-trigger{
+  background:#0a0a14;border:1px solid #3d3d5e;border-radius:4px;
+  padding:1px 6px;font-size:11px;font-weight:700;color:#a78bfa;font-family:monospace;
+  flex-shrink:0;
+}
+.node-label{font-size:13px;font-weight:500;color:#d0d0e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.node-meta{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.node-status{font-size:12px;padding:1px 6px;border-radius:4px}
+.node-status.on{color:#00cec9}
+.node-status.off{color:#ff6b6b}
+.tree-node.disabled>.node-content{opacity:.4}
+.node-actions{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .2s}
+.node-content:hover .node-actions{opacity:1}
+.btn-icon{
+  background:none;border:none;cursor:pointer;font-size:14px;padding:2px 4px;
+  border-radius:4px;transition:background .2s;line-height:1;
+}
+.btn-icon:hover{background:rgba(108,92,231,.2)}
+.btn-icon.delete:hover{background:rgba(255,107,107,.2)}
+.btn-icon.add{font-size:13px}
+.badge.type-submenu{background:rgba(108,92,231,.15);border-color:#6c5ce7;color:#a78bfa}
+.badge.type-text{background:rgba(0,206,201,.15);border-color:#00cec9;color:#00cec9}
+.badge.type-product_list{background:rgba(253,121,168,.15);border-color:#fd79a8;color:#fd79a8}
+.badge.type-back{background:rgba(153,153,170,.15);border-color:#9999aa;color:#9999aa}
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media(max-width:768px){

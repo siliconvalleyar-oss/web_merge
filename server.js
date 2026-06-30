@@ -102,7 +102,7 @@ const menuSeed = [
   ['',  0, 'a', '', 'Servicios',        'submenu', ''],
   ['',  1, 'b', '', 'Productos',        'product_list', ''],
   ['',  2, 'c', '', 'Tienda',           'submenu', ''],
-  ['',  3, 'd', '', 'Link de compra',   'text', '🛒 *Link de compra*\n\n👉 *Tienda online:*\nhttps://webmerge.studio/tienda\n\n📍 También podés visitarnos en:\nAv. Siempre Viva 123, Centro'],
+  ['',  3, 'd', '', 'Link de compra',   'text', '🛒 *Link de compra*\n\n👉 *Tienda online:*\nhttp://ms7851.local:8080/admin/\n\n📍 También podés visitarnos en:\nAv. Siempre Viva 123, Centro'],
   ['',  4, 'e', '', 'Más productos',    'product_list', ''],
   ['',  5, 'f', '', 'Hablar con asesor','text', '👤 *Hablar con un asesor*\n\nDejanos tu consulta y en breve te responderemos.'],
   ['a', 0, 'aa', '', 'Desarrollo web',  'text', '💻 *Desarrollo web*\n\nCreamos sitios web profesionales, tiendas online y aplicaciones web a medida.\n\nTecnologías: HTML, CSS, JavaScript, Node.js, React.'],

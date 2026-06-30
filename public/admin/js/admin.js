@@ -660,37 +660,99 @@ async function deleteUser(id) {
 }
 
 /* ── Menu Options ───────────────────────────────────────── */
+const TYPE_LABELS = {
+  text: 'Texto',
+  submenu: 'Submenú',
+  product_list: 'Productos',
+  back: 'Volver',
+};
+
+const TYPE_ICONS = {
+  submenu: '📂',
+  product_list: '📋',
+  text: '💬',
+  back: '🔙',
+};
+
+function renderTree(items, parentKey, depth) {
+  if (depth > 5) return '';
+  const children = items.filter(m => m.parent_key === parentKey).sort((a, b) => a.sort_order - b.sort_order);
+  if (children.length === 0) return '';
+  let html = '<div class="tree-children">';
+  children.forEach((m, idx) => {
+    const label = `${m.icon || ''} ${m.label}`.trim();
+    const typeIcon = TYPE_ICONS[m.response_type] || '';
+    const typeLabel = TYPE_LABELS[m.response_type] || m.response_type;
+    const hasKids = items.some(c => c.parent_key === m.trigger_key && c.enabled);
+    html += `<div class="tree-node ${!m.enabled ? 'disabled' : ''} ${hasKids ? 'has-children' : ''}">
+      <div class="node-content" onclick="editMenuItem(${m.id})">
+        <div class="node-main">
+          <code class="node-trigger">${m.trigger_key}</code>
+          <span class="node-label">${label}</span>
+        </div>
+        <div class="node-meta">
+          <span class="badge type-${m.response_type}">${typeIcon} ${typeLabel}</span>
+          <span class="node-status ${m.enabled ? 'on' : 'off'}">${m.enabled ? '✓' : '✕'}</span>
+        </div>
+        <div class="node-actions" onclick="event.stopPropagation()">
+          <button class="btn-icon edit" onclick="editMenuItem(${m.id})" title="Editar">✏️</button>
+          <button class="btn-icon delete" onclick="deleteMenuItem(${m.id})" title="Eliminar">🗑️</button>
+          <button class="btn-icon add" onclick="event.stopPropagation();openMenuModal({parent_key:'${m.trigger_key}',sort_order:0,response_type:'text',enabled:1,icon:'',label:'',response_text:'',trigger_key:''})" title="Agregar hijo">➕</button>
+        </div>
+      </div>
+      ${hasKids ? renderTree(items, m.trigger_key, depth + 1) : ''}
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
 async function loadMenuOptions() {
   const data = await api('/menu-options');
   if (data.error) return;
-  $('menuBody').innerHTML = data.map(m =>
-    `<tr>
-      <td>${m.sort_order}</td>
-      <td><code>${m.trigger_key}</code></td>
-      <td>${m.icon || '—'}</td>
-      <td><strong>${m.label}</strong></td>
-      <td><span class="badge">${m.response_type}</span></td>
-      <td>${m.parent_key || '—'}</td>
-      <td>${m.enabled ? '✓ Activo' : '✕ Inactivo'}</td>
-      <td>
-        <button class="btn btn-sm btn-edit" onclick="editMenuItem(${m.id})">Editar</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteMenuItem(${m.id})">Eliminar</button>
-      </td>
-    </tr>`
-  ).join('');
+  const tree = `<div class="tree-root">
+    <div class="tree-node root">
+      <div class="node-content">
+        <div class="node-main">
+          <span class="node-label">📋 Menú Principal</span>
+        </div>
+        <div class="node-actions" onclick="event.stopPropagation()">
+          <button class="btn-icon add" onclick="openMenuModal({parent_key:'',sort_order:0,response_type:'text',enabled:1,icon:'',label:'',response_text:'',trigger_key:''})" title="Agregar opción principal">➕</button>
+        </div>
+      </div>
+      ${renderTree(data, '', 0)}
+    </div>
+  </div>`;
+  $('menuTree').innerHTML = tree;
 }
 
 function openMenuModal(item = null) {
-  $('menuModalTitle').textContent = item ? 'Editar opción de menú' : 'Nueva opción de menú';
-  $('menuId').value = item ? item.id : '';
+  $('menuModalTitle').textContent = item && item.id ? 'Editar opción de menú' : 'Nueva opción de menú';
+  $('menuId').value = item ? (item.id || '') : '';
   $('menuTrigger').value = item ? item.trigger_key : '';
   $('menuLabel').value = item ? item.label : '';
   $('menuIcon').value = item ? item.icon : '';
   $('menuType').value = item ? item.response_type : 'text';
-  $('menuParent').value = item ? item.parent_key : '';
-  $('menuOrder').value = item ? item.sort_order : 0;
+  $('menuOrder').value = item ? (item.sort_order || 0) : 0;
   $('menuEnabled').value = item ? (item.enabled ? 1 : 0) : 1;
   $('menuResponse').value = item ? item.response_text : '';
+
+  // Build parent select from existing main menu items
+  const sel = $('menuParent');
+  sel.innerHTML = '<option value="">Principal</option>';
+  const parentVal = item ? (item.parent_key || '') : '';
+  api('/menu-options').then(data => {
+    if (data && !data.error) {
+      data.filter(m => m.parent_key === '' && m.response_type === 'submenu' && m.enabled).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.trigger_key;
+        opt.textContent = `${m.icon || ''} ${m.label}`.trim();
+        sel.appendChild(opt);
+      });
+    }
+    sel.value = parentVal;
+  });
+
   $('menuModal').classList.remove('hidden');
 }
 
@@ -698,8 +760,11 @@ function closeMenuModal() {
   $('menuModal').classList.add('hidden');
 }
 
-$('addMenuItemBtn').addEventListener('click', () => openMenuModal());
+$('addMenuItemBtn').addEventListener('click', () => openMenuModal({
+  parent_key: '', sort_order: 0, response_type: 'text', enabled: 1, icon: '', label: '', response_text: '', trigger_key: ''
+}));
 $('closeMenuModal').addEventListener('click', closeMenuModal);
+document.querySelector('#menuModal .modal-backdrop')?.addEventListener('click', closeMenuModal);
 
 $('menuForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -760,12 +825,41 @@ async function loadWhatsApp() {
   if (status.qrCode) {
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(status.qrCode)}&size=260x260`;
     $('whatsappQr').innerHTML = `<img src="${qrImg}" alt="QR Code">`;
+    $('whatsappPairArea').style.display = 'block';
+    $('pairBtn').disabled = false;
+    $('pairBtn').textContent = '🔗 Vincular';
   } else {
     $('whatsappQr').innerHTML = '';
+    $('whatsappPairArea').style.display = 'none';
   }
 
   loadConversations();
 }
+
+$('pairBtn').addEventListener('click', async () => {
+  const phone = $('pairPhone').value.trim();
+  if (!phone) { showToast('Ingresá un número de teléfono'); return; }
+  $('pairBtn').disabled = true;
+  $('pairBtn').textContent = '⏳ Generando código...';
+  const res = await api('/whatsapp-pair', { method: 'POST', body: JSON.stringify({ phone }) });
+  $('pairBtn').disabled = false;
+  if (res.success && res.code) {
+    $('pairCode').style.display = 'block';
+    $('pairCode').innerHTML = `
+      <div style="margin-top:12px;padding:16px;background:#0a0a14;border:1px solid #6c5ce7;border-radius:10px;text-align:center">
+        <div style="font-size:12px;color:#999;margin-bottom:6px">Código de vinculación (8 dígitos)</div>
+        <div style="font-size:32px;font-weight:800;font-family:monospace;letter-spacing:6px;color:#a78bfa">${res.code}</div>
+        <div style="font-size:11px;color:#666;margin-top:8px">
+          WhatsApp → Ajustes → Dispositivos vinculados → Vincular un dispositivo<br>
+          Tocá "Vincular con número de teléfono" e ingresá este código
+        </div>
+      </div>
+    `;
+    showToast('Código generado — revisá WhatsApp');
+  } else {
+    showToast(res.error || 'Error al generar código');
+  }
+});
 
 $('waStopBtn').addEventListener('click', async () => {
   if (!confirm('¿Detener WhatsApp?')) return;

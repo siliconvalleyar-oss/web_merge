@@ -147,6 +147,17 @@ router.post('/whatsapp-reset', authMiddleware, async (req, res) => {
   }
 });
 
+router.post('/whatsapp-pair', authMiddleware, async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ error: 'Número de teléfono requerido' });
+    const code = await whatsapp.generatePairingCode(phone);
+    res.json({ success: true, code });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/whatsapp-messages', authMiddleware, (req, res) => {
   try {
     const messages = whatsapp.getMessages();
