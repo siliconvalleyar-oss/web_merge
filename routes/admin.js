@@ -387,6 +387,50 @@ router.delete('/users/:id', authMiddleware, roleMiddleware('master'), (req, res)
   }
 });
 
+/* ── Menu options CRUD ─────────────────────────────────── */
+router.get('/menu-options', authMiddleware, (req, res) => {
+  try {
+    const rows = db.prepare('SELECT * FROM menu_options ORDER BY parent_key, sort_order ASC').all();
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/menu-options', authMiddleware, roleMiddleware('master'), (req, res) => {
+  try {
+    const { parent_key, sort_order, trigger_key, icon, label, response_type, response_text, enabled } = req.body;
+    if (!trigger_key || !label) return res.status(400).json({ error: 'trigger_key y label son obligatorios' });
+    const result = db.prepare(
+      'INSERT INTO menu_options (parent_key, sort_order, trigger_key, icon, label, response_type, response_text, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(parent_key || '', sort_order || 0, trigger_key, icon || '', label, response_type || 'text', response_text || '', enabled !== undefined ? (enabled ? 1 : 0) : 1);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/menu-options/:id', authMiddleware, roleMiddleware('master'), (req, res) => {
+  try {
+    const { parent_key, sort_order, trigger_key, icon, label, response_type, response_text, enabled } = req.body;
+    db.prepare(
+      "UPDATE menu_options SET parent_key=?, sort_order=?, trigger_key=?, icon=?, label=?, response_type=?, response_text=?, enabled=? WHERE id=?"
+    ).run(parent_key || '', sort_order || 0, trigger_key || '', icon || '', label || '', response_type || 'text', response_text || '', enabled !== undefined ? (enabled ? 1 : 0) : 1, req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/menu-options/:id', authMiddleware, roleMiddleware('master'), (req, res) => {
+  try {
+    db.prepare('DELETE FROM menu_options WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /* ── Send WhatsApp message (response role) ──────────────── */
 router.post('/whatsapp-send', authMiddleware, roleMiddleware('master', 'response'), async (req, res) => {
   try {

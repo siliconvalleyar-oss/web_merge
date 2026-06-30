@@ -61,6 +61,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     if (tab.dataset.tab === 'clients') loadClients();
     if (tab.dataset.tab === 'products') loadProducts();
     if (tab.dataset.tab === 'users') loadUsers();
+    if (tab.dataset.tab === 'menu') loadMenuOptions();
     if (tab.dataset.tab === 'whatsapp') { loadWhatsApp(); startWhatsAppPolling(); }
     if (tab.dataset.tab === 'config') loadConfig();
   });
@@ -656,6 +657,85 @@ async function deleteUser(id) {
   if (!confirm('¿Eliminar este usuario?')) return;
   const res = await api(`/users/${id}`, { method: 'DELETE' });
   if (res.success) { loadUsers(); showToast('Usuario eliminado'); }
+}
+
+/* ── Menu Options ───────────────────────────────────────── */
+async function loadMenuOptions() {
+  const data = await api('/menu-options');
+  if (data.error) return;
+  $('menuBody').innerHTML = data.map(m =>
+    `<tr>
+      <td>${m.sort_order}</td>
+      <td><code>${m.trigger_key}</code></td>
+      <td>${m.icon || '—'}</td>
+      <td><strong>${m.label}</strong></td>
+      <td><span class="badge">${m.response_type}</span></td>
+      <td>${m.parent_key || '—'}</td>
+      <td>${m.enabled ? '✓ Activo' : '✕ Inactivo'}</td>
+      <td>
+        <button class="btn btn-sm btn-edit" onclick="editMenuItem(${m.id})">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteMenuItem(${m.id})">Eliminar</button>
+      </td>
+    </tr>`
+  ).join('');
+}
+
+function openMenuModal(item = null) {
+  $('menuModalTitle').textContent = item ? 'Editar opción de menú' : 'Nueva opción de menú';
+  $('menuId').value = item ? item.id : '';
+  $('menuTrigger').value = item ? item.trigger_key : '';
+  $('menuLabel').value = item ? item.label : '';
+  $('menuIcon').value = item ? item.icon : '';
+  $('menuType').value = item ? item.response_type : 'text';
+  $('menuParent').value = item ? item.parent_key : '';
+  $('menuOrder').value = item ? item.sort_order : 0;
+  $('menuEnabled').value = item ? (item.enabled ? 1 : 0) : 1;
+  $('menuResponse').value = item ? item.response_text : '';
+  $('menuModal').classList.remove('hidden');
+}
+
+function closeMenuModal() {
+  $('menuModal').classList.add('hidden');
+}
+
+$('addMenuItemBtn').addEventListener('click', () => openMenuModal());
+$('closeMenuModal').addEventListener('click', closeMenuModal);
+
+$('menuForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = $('menuId').value;
+  const data = {
+    trigger_key: $('menuTrigger').value.trim(),
+    label: $('menuLabel').value.trim(),
+    icon: $('menuIcon').value.trim(),
+    response_type: $('menuType').value,
+    parent_key: $('menuParent').value,
+    sort_order: parseInt($('menuOrder').value) || 0,
+    enabled: parseInt($('menuEnabled').value),
+    response_text: $('menuResponse').value.trim(),
+  };
+  const res = id
+    ? await api(`/menu-options/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+    : await api('/menu-options', { method: 'POST', body: JSON.stringify(data) });
+  if (res.success || res.id) {
+    closeMenuModal();
+    loadMenuOptions();
+    showToast(id ? 'Opción actualizada' : 'Opción creada');
+  } else {
+    showToast(res.error || 'Error al guardar');
+  }
+});
+
+async function editMenuItem(id) {
+  const data = await api('/menu-options');
+  const item = data.find(m => m.id === id);
+  if (item) openMenuModal(item);
+}
+
+async function deleteMenuItem(id) {
+  if (!confirm('¿Eliminar esta opción del menú?')) return;
+  const res = await api(`/menu-options/${id}`, { method: 'DELETE' });
+  if (res.success) { loadMenuOptions(); showToast('Opción eliminada'); }
 }
 
 /* ── WhatsApp ────────────────────────────────────────────── */

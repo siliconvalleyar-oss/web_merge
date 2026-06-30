@@ -84,6 +84,49 @@ const adminConfigDefaults = [
 const insertConfig = db.prepare('INSERT OR IGNORE INTO config (config_key, config_value) VALUES (?, ?)');
 for (const [k, v] of adminConfigDefaults) insertConfig.run(k, v);
 
+/* ── WhatsApp menu options table ───────────────────────── */
+db.exec(`
+  CREATE TABLE IF NOT EXISTS menu_options (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    parent_key    TEXT NOT NULL DEFAULT '',
+    sort_order    INTEGER DEFAULT 0,
+    trigger_key   TEXT NOT NULL,
+    icon          TEXT DEFAULT '',
+    label         TEXT NOT NULL,
+    response_type TEXT DEFAULT 'text',
+    response_text TEXT DEFAULT '',
+    enabled       INTEGER DEFAULT 1
+  )
+`);
+const menuSeed = [
+  ['',  0, 'a', '', 'Servicios',        'submenu', ''],
+  ['',  1, 'b', '', 'Productos',        'product_list', ''],
+  ['',  2, 'c', '', 'Tienda',           'submenu', ''],
+  ['',  3, 'd', '', 'Link de compra',   'text', '🛒 *Link de compra*\n\n👉 *Tienda online:*\nhttps://webmerge.studio/tienda\n\n📍 También podés visitarnos en:\nAv. Siempre Viva 123, Centro'],
+  ['',  4, 'e', '', 'Más productos',    'product_list', ''],
+  ['',  5, 'f', '', 'Hablar con asesor','text', '👤 *Hablar con un asesor*\n\nDejanos tu consulta y en breve te responderemos.'],
+  ['a', 0, 'aa', '', 'Desarrollo web',  'text', '💻 *Desarrollo web*\n\nCreamos sitios web profesionales, tiendas online y aplicaciones web a medida.\n\nTecnologías: HTML, CSS, JavaScript, Node.js, React.'],
+  ['a', 1, 'ab', '', 'Diseño gráfico',  'text', '🎨 *Diseño gráfico*\n\nDiseñamos tu marca, logo, redes sociales y material publicitario.\n\nIncluye: identidad visual, branding, flyers.'],
+  ['a', 2, 'ac', '', 'Marketing digital','text', '📱 *Marketing digital*\n\nGestionamos redes sociales, campañas de publicidad y SEO para tu negocio.'],
+  ['a', 3, 'ad', '', 'Soporte técnico', 'text', '🔧 *Soporte técnico*\n\nSoporte técnico informático, mantenimiento de sistemas y consultoría IT.'],
+  ['a', 4, 'ae', '', 'Consultoría',     'text', '💡 *Consultoría*\n\nAsesoramiento personalizado para tu proyecto digital.'],
+  ['a', 5, 'af', '', 'Volver',           'back', ''],
+  ['c', 0, 'ca', '', 'Horarios',         'text', '🕐 *Horarios*\n\nLunes a Viernes: 9:00 a 18:00\nSábados: 9:00 a 13:00\nDomingos: Cerrado'],
+  ['c', 1, 'cb', '', 'Ubicación',        'text', '📍 *Ubicación*\n\nAv. Siempre Viva 123, Centro'],
+  ['c', 2, 'cc', '', 'Contacto',         'text', '📞 *Contacto*\n\nTeléfono: +54 11 5555-1234\nEmail: contacto@webmerge.studio'],
+  ['c', 3, 'cd', '', 'Formas de pago',   'text', '💳 *Formas de pago*\n\n• Efectivo\n• Transferencia bancaria\n• Mercado Pago\n• Tarjetas de crédito/débito'],
+  ['c', 4, 'ce', '', 'Envíos',           'text', '🚚 *Envíos*\n\n• Envío gratis en compras mayores a $5000\n• Entrega en 24/48 hs hábiles\n• Retiro en tienda sin costo'],
+  ['c', 5, 'cf', '', 'Volver',           'back', ''],
+];
+const insertMenu = db.prepare('INSERT OR IGNORE INTO menu_options (parent_key, sort_order, trigger_key, icon, label, response_type, response_text) VALUES (?, ?, ?, ?, ?, ?, ?)');
+const seedMenu = db.transaction(() => {
+  const count = db.prepare('SELECT COUNT(*) as c FROM menu_options').get().c;
+  if (count === 0) {
+    for (const row of menuSeed) insertMenu.run(...row);
+  }
+});
+seedMenu();
+
 const app = express();
 const PORT = config.PORT;
 const fs = require('fs');

@@ -51,6 +51,7 @@
           <button class="tab" data-tab="contacts">Contactos <span class="badge-msg" style="display:none"></span></button>
           <button class="tab" data-tab="clients">Clientes</button>
           <button class="tab" data-tab="products">Productos</button>
+          <button class="tab" data-tab="menu">Menú WhatsApp</button>
           <button class="tab" data-tab="users">Usuarios</button>
           <button class="tab" data-tab="whatsapp">WhatsApp <span class="wa-dot"></span> <span class="badge-msg" style="display:none"></span></button>
         </nav>
@@ -228,6 +229,23 @@
           </div>
         </section>
 
+        <!-- Menú WhatsApp Tab -->
+        <section id="tabMenu" class="tab-content">
+          <div class="tab-header">
+            <h3>Menú WhatsApp Bot</h3>
+            <button id="addMenuItemBtn" class="btn btn-primary btn-sm">+ Nueva opción</button>
+          </div>
+          <p style="color:#999;margin-bottom:16px;font-size:14px">Personalizá las opciones del menú interactivo del bot de WhatsApp. Las opciones se agrupan por <code>parent_key</code>: vacío = menú principal, <code>a</code> = submenú Servicios, <code>c</code> = submenú Tienda.</p>
+          <div class="table-wrap">
+            <table id="menuTable">
+              <thead><tr>
+                <th>Orden</th><th>Trigger</th><th>Icono</th><th>Etiqueta</th><th>Tipo</th><th>Padre</th><th>Estado</th><th>Acciones</th>
+              </tr></thead>
+              <tbody id="menuBody"></tbody>
+            </table>
+          </div>
+        </section>
+
         <!-- WhatsApp Tab -->
         <section id="tabWhatsapp" class="tab-content">
           <div class="tab-header">
@@ -360,6 +378,68 @@
         </div>
         <input type="hidden" id="userId" value="">
         <button type="submit" class="btn btn-primary btn-full">Guardar usuario</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="menuModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="menuModalTitle">Nueva opción de menú</h3>
+        <button id="closeMenuModal" class="modal-close">✕</button>
+      </div>
+      <form id="menuForm" class="modal-form">
+        <div class="form-group">
+          <label>Trigger (código de letra)</label>
+          <input type="text" id="menuTrigger" class="form-input" placeholder="ej: a, b, aa, ab" required>
+        </div>
+        <div class="form-group">
+          <label>Etiqueta</label>
+          <input type="text" id="menuLabel" class="form-input" placeholder="Nombre visible en el menú" required>
+        </div>
+        <div class="form-group">
+          <label>Icono (emoji)</label>
+          <input type="text" id="menuIcon" class="form-input" placeholder="ej: 🛒, 💻, 📍">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo</label>
+            <select id="menuType" class="form-input">
+              <option value="text">Texto / contenido</option>
+              <option value="submenu">Submenú</option>
+              <option value="product_list">Lista de productos</option>
+              <option value="back">Volver atrás</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Parent (menú padre)</label>
+            <select id="menuParent" class="form-input">
+              <option value="">Principal</option>
+              <option value="a">Servicios</option>
+              <option value="c">Tienda</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Orden</label>
+            <input type="number" id="menuOrder" class="form-input" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label>Activo</label>
+            <select id="menuEnabled" class="form-input">
+              <option value="1">Sí</option>
+              <option value="0">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Texto de respuesta (para tipo "texto")</label>
+          <textarea id="menuResponse" class="form-input" rows="6" placeholder="Texto que responde el bot..."></textarea>
+        </div>
+        <input type="hidden" id="menuId" value="">
+        <button type="submit" class="btn btn-primary btn-full">Guardar opción</button>
       </form>
     </div>
   </div>

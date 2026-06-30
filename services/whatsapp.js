@@ -8,40 +8,93 @@ let client = null;
 let qrCode = null;
 let status = 'disconnected';
 
-const MENU = `👋 *Hola! Soy el contestador automático de Leo*
+/* ── Build menu from DB ─────────────────────────────── */
+function buildMenu(parentKey) {
+  const items = db.prepare(
+    'SELECT * FROM menu_options WHERE parent_key = ? AND enabled = 1 ORDER BY sort_order ASC'
+  ).all(parentKey || '');
 
-Elegí una opción con la *letra* correspondiente:
+  if (items.length === 0) return null;
 
-*A* ─ Servicios
-*B* ─ Productos
-*C* ─ Tienda
-*D* ─ Link de compra
-*E* ─ Más productos
-*F* ─ Hablar con un asesor
+  let msg = '';
+  items.forEach((item, i) => {
+    const icon = item.icon || '';
+    const trigger = item.trigger_key;
+    msg += `\n*${trigger}* ${icon ? icon + ' ' : ''}─ ${item.label}`;
+  });
+  msg += '\n\nRespondé con el *código* de la opción que te interese.';
 
-Respondé con la *letra* de la opción que te interese.`;
+  // Get parent's label for a nicer title
+  let title = 'Menú';
+  if (parentKey) {
+    const parent = db.prepare('SELECT label, icon FROM menu_options WHERE trigger_key = ? AND parent_key = \'\'').get(parentKey);
+    if (parent) title = `${parent.icon || ''} ${parent.label}`.trim();
+  } else {
+    const config = db.prepare("SELECT config_value FROM config WHERE config_key = 'chatbot_name'").get();
+    const botName = config ? config.config_value : 'WebBot';
+    title = `👋 *Hola! Soy el contestador automático de ${botName}*`;
+  }
+  return `${title}\n\nElegí una opción con el *código* correspondiente:\n${msg}`;
+}
 
-const SUB_SERVICIOS = `🔧 *Servicios*
+function getMenuResponse(option) {
+  let opt = option.trim().toLowerCase();
+  // Normalize: "a.a" → "aa", "a 1" → "aa" (1→a, 2→b, etc.)
+  opt = opt.replace(/[. ]([a-z])/g, (m, c) => c);
+  opt = opt.replace(/[. ](\d)/g, (m, d) => String.fromCharCode(96 + parseInt(d)));
+  opt = opt.replace(/[. ]/g, '');
 
-*AA* ─ Desarrollo web
-*AB* ─ Diseño gráfico
-*AC* ─ Marketing digital
-*AD* ─ Soporte técnico
-*AE* ─ Consultoría
-*AF* ─ Volver al menú principal
+  // Look up the triggered item in DB
+  const item = db.prepare(
+    'SELECT * FROM menu_options WHERE trigger_key = ? AND enabled = 1'
+  ).get(opt);
 
-Respondé con las *dos letras* de la opción (ej: AA).`;
+  if (!item) {
+    // Fallback: try to find a product by letter index
+    if (/^[a-z]$/.test(opt)) {
+      const idx = opt.charCodeAt(0) - 97;
+      const products = db.prepare("SELECT * FROM products WHERE enabled = 1 ORDER BY category, name ASC").all();
+      const p = products[idx];
+      if (p) {
+        return `📦 *${p.name}*\n\n${p.description || 'Sin descripción'}\n\n💰 *Precio:* $${p.price.toFixed(2)}\n📦 *Stock:* ${p.stock > 0 ? '✅ Disponible (' + p.stock + ' uds.)' : '❌ Sin stock'}${p.category ? '\n🏷️ *Categoría:* ' + p.category : ''}\n\nEscribí *menu* para volver al inicio.`;
+      }
+    }
+    return `🤖 No entendí tu opción.\n\nEscribí *menu* para ver las opciones disponibles.`;
+  }
 
-const SUB_TIENDA = `🏪 *Tienda*
-
-*CA* ─ Horarios de atención
-*CB* ─ Ubicación
-*CC* ─ Contacto directo
-*CD* ─ Formas de pago
-*CE* ─ Envíos
-*CF* ─ Volver al menú principal
-
-Respondé con las *dos letras* de la opción (ej: CA).`;
+  switch (item.response_type) {
+    case 'submenu': {
+      const sub = buildMenu(item.trigger_key);
+      return sub || item.response_text || 'Sin contenido.';
+    }
+    case 'product_list': {
+      const products = db.prepare("SELECT name, price, stock, category FROM products WHERE enabled = 1 ORDER BY category, name ASC").all();
+      if (products.length === 0) return '📋 No hay productos disponibles en este momento.';
+      let msg = '📋 *Productos disponibles*\n\n';
+      let lastCat = '';
+      products.forEach((p, i) => {
+        if (p.category && p.category !== lastCat) {
+          msg += `\n▸ *${p.category}*\n`;
+          lastCat = p.category;
+        }
+        const letra = String.fromCharCode(97 + i);
+        msg += `${letra}) ${p.name} — $${p.price.toFixed(2)} ${p.stock > 0 ? '✅' : '❌'}\n`;
+      });
+      msg += '\nRespondé con la *letra* del producto para más detalles.\nO escribí *menu* para volver.';
+      return msg;
+    }
+    case 'back':
+      // Go up one level: if parent_key is 'a' or 'c', show main menu; otherwise main menu
+      if (item.parent_key) {
+        const parentMenu = buildMenu('');
+        return parentMenu || buildMenu('');
+      }
+      return buildMenu('');
+    case 'text':
+    default:
+      return item.response_text || 'Sin contenido.';
+  }
+}
 
 function findChrome() {
   const candidates = [
@@ -54,99 +107,6 @@ function findChrome() {
     try { execSync(`test -x ${p}`); return p; } catch {}
   }
   return null;
-}
-
-function getMenuResponse(option) {
-  const opt = option.trim().toLowerCase();
-
-  // ── Main menu letters ──
-  if (opt === 'a') return SUB_SERVICIOS;
-  if (opt === 'b') {
-    const products = db.prepare("SELECT name, price, stock, category FROM products WHERE enabled = 1 ORDER BY category, name ASC").all();
-    if (products.length === 0) return '📋 *Productos*\n\nNo hay productos disponibles en este momento.';
-    let msg = '📋 *Productos disponibles*\n\n';
-    let lastCat = '';
-    products.forEach((p, i) => {
-      if (p.category && p.category !== lastCat) {
-        msg += `\n▸ *${p.category}*\n`;
-        lastCat = p.category;
-      }
-      const letra = String.fromCharCode(97 + i);
-      msg += `${letra}) ${p.name} — $${p.price.toFixed(2)} ${p.stock > 0 ? '✅' : '❌'}\n`;
-    });
-    msg += '\nRespondé con la *letra* del producto para más detalles.';
-    msg += '\nO escribí *menu* para volver.';
-    return msg;
-  }
-  if (opt === 'c') return SUB_TIENDA;
-  if (opt === 'd') {
-    return `🛒 *Link de compra*
-
-👉 *Tienda online:*\nhttps://webmerge.studio/tienda
-
-📍 También podés visitarnos en:\nAv. Siempre Viva 123, Centro
-
-Escribí *menu* para volver al inicio.`;
-  }
-  if (opt === 'e') {
-    const products = db.prepare("SELECT name, price, stock FROM products WHERE enabled = 1 ORDER BY name ASC LIMIT 20").all();
-    if (products.length === 0) return '📦 *Más productos*\n\nNo hay más productos disponibles.';
-    let msg = '📦 *Más productos*\n\n';
-    products.forEach((p, i) => {
-      const letra = String.fromCharCode(97 + i);
-      msg += `${letra}) *${p.name}* — $${p.price.toFixed(2)}\n`;
-      msg += `   Stock: ${p.stock > 0 ? '✅' : '❌'}\n`;
-    });
-    msg += '\nRespondé con la *letra* del producto para más info.';
-    msg += '\nO escribí *menu* para volver.';
-    return msg;
-  }
-  if (opt === 'f') {
-    return `👤 *Hablar con un asesor*
-
-Dejanos tu consulta y en breve te responderemos.
-
-Escribí *menu* para volver al inicio.`;
-  }
-
-  // ── Submenu: Servicios (a → letra) ──
-  if (opt === 'aa' || opt === 'a.a' || opt === 'a 1') return '💻 *Desarrollo web*\n\nCreamos sitios web profesionales, tiendas online y aplicaciones web a medida.\n\nTecnologías: HTML, CSS, JavaScript, Node.js, React.\n\nEscribí *menu* para volver.';
-  if (opt === 'ab' || opt === 'a.b' || opt === 'a 2') return '🎨 *Diseño gráfico*\n\nDiseñamos tu marca, logo, redes sociales y material publicitario.\n\nIncluye: identidad visual, branding, flyers.\n\nEscribí *menu* para volver.';
-  if (opt === 'ac' || opt === 'a.c' || opt === 'a 3') return '📱 *Marketing digital*\n\nGestionamos redes sociales, campañas de publicidad y SEO para tu negocio.\n\nEscribí *menu* para volver.';
-  if (opt === 'ad' || opt === 'a.d' || opt === 'a 4') return '🔧 *Soporte técnico*\n\nSoporte técnico informático, mantenimiento de sistemas y consultoría IT.\n\nEscribí *menu* para volver.';
-  if (opt === 'ae' || opt === 'a.e' || opt === 'a 5') return '💡 *Consultoría*\n\nAsesoramiento personalizado para tu proyecto digital.\n\nEscribí *menu* para volver.';
-  if (opt === 'af' || opt === 'a.f') return MENU;
-
-  // ── Submenu: Tienda (c → letra) ──
-  if (opt === 'ca' || opt === 'c.a' || opt === 'c 1') return '🕐 *Horarios*\n\nLunes a Viernes: 9:00 a 18:00\nSábados: 9:00 a 13:00\nDomingos: Cerrado\n\nEscribí *menu* para volver.';
-  if (opt === 'cb' || opt === 'c.b' || opt === 'c 2') return '📍 *Ubicación*\n\nAv. Siempre Viva 123, Centro\n\n📌 Ver en Google Maps\n\nEscribí *menu* para volver.';
-  if (opt === 'cc' || opt === 'c.c' || opt === 'c 3') return '📞 *Contacto*\n\nTeléfono: +54 11 5555-1234\nEmail: contacto@webmerge.studio\n\nEscribí *menu* para volver.';
-  if (opt === 'cd' || opt === 'c.d' || opt === 'c 4') return '💳 *Formas de pago*\n\n• Efectivo\n• Transferencia bancaria\n• Mercado Pago\n• Tarjetas de crédito/débito\n\nEscribí *menu* para volver.';
-  if (opt === 'ce' || opt === 'c.e' || opt === 'c 5') return '🚚 *Envíos*\n\n• Envío gratis en compras mayores a $5000\n• Entrega en 24/48 hs hábiles\n• Retiro en tienda sin cargo\n\nEscribí *menu* para volver.';
-  if (opt === 'cf' || opt === 'c.f') return MENU;
-
-  // ── Product detail by letter (from B or E sub-lists) ──
-  if (/^[a-z]$/.test(opt)) {
-    const idx = opt.charCodeAt(0) - 97;
-    const products = db.prepare("SELECT * FROM products WHERE enabled = 1 ORDER BY category, name ASC").all();
-    const p = products[idx];
-    if (p) {
-      return `📦 *${p.name}*
-
-${p.description || 'Sin descripción'}
-
-💰 *Precio:* $${p.price.toFixed(2)}
-📦 *Stock:* ${p.stock > 0 ? '✅ Disponible (' + p.stock + ' uds.)' : '❌ Sin stock'}
-${p.category ? '🏷️ *Categoría:* ' + p.category : ''}
-
-Escribí *menu* para volver al inicio.`;
-    }
-  }
-
-  // ── Fallback ──
-  return `🤖 No entendí tu opción.
-
-Escribí *menu* para ver las opciones disponibles.`;
 }
 
 async function initWhatsApp() {
@@ -196,6 +156,10 @@ async function initWhatsApp() {
     console.log('❌ WhatsApp desconectado:', reason);
   });
 
+  const botName = (() => {
+    try { const r = db.prepare("SELECT config_value FROM config WHERE config_key = 'chatbot_name'").get(); return r ? r.config_value : 'WebBot'; } catch { return 'WebBot'; }
+  })();
+
   const handleMessage = async (msg, source) => {
     try {
       if (msg.from.endsWith('@g.us')) {
@@ -218,9 +182,9 @@ async function initWhatsApp() {
       if (/^[0-9]+$/.test(userQuery) || /^[a-z]([. ][a-z0-9])?$/.test(userQuery)) {
         response = getMenuResponse(userQuery);
       } else if (userQuery === 'menu' || userQuery === 'hola' || userQuery === 'buenas' || userQuery.includes('menu')) {
-        response = MENU;
+        response = buildMenu('');
       } else {
-        response = `🤖 *Contestador automático de Leo*
+        response = `🤖 *${botName}*
 
 Gracias por tu consulta. Un asesor te responderá a la brevedad.
 
