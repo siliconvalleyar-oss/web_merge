@@ -43,6 +43,8 @@ async function initWhatsApp() {
     status = 'connected';
     qrCode = null;
     console.log('✅ WhatsApp conectado');
+    console.log('  📬 Esperando mensajes...');
+    console.log('  💡 Enviá un mensaje al número vinculado para probar');
   });
 
   client.on('disconnected', reason => {
@@ -51,28 +53,53 @@ async function initWhatsApp() {
     console.log('❌ WhatsApp desconectado:', reason);
   });
 
-  client.on('message', async msg => {
-    if (msg.from.endsWith('@g.us')) return;
-    if (msg.type !== 'chat' && msg.type !== 'extended_text') return;
+  const handleMessage = async (msg, source) => {
+    try {
+      if (msg.from.endsWith('@g.us')) {
+        console.log(`  ↪ [${source}] ignorado (grupo):`, msg.from);
+        return;
+      }
 
-    const userNumber = msg.from.replace('@c.us', '');
-    const userQuery = msg.body;
+      const rawFrom = msg.from || '';
+      const userNumber = rawFrom.replace(/@c\.us$/, '');
+      const userQuery = (msg.body || '').trim();
 
-    const { found, answer } = rag.getAnswer(userQuery);
-    const response = found
-      ? answer
-      : 'Lo siento, no encontré información sobre eso. Escríbeme con otras palabras o consulta nuestra web.';
+      console.log(`  📩 [${source}] WhatsApp msg de ${userNumber}: "${userQuery.substring(0, 60)}"`);
 
-    await msg.reply(response);
+      if (!userQuery) {
+        console.log('  ↪ ignorado (mensaje vacío)');
+        return;
+      }
 
-    db.prepare(
-      'INSERT INTO whatsapp_messages (number, message, response) VALUES (?, ?, ?)'
-    ).run(userNumber, userQuery, response);
+      const { found, answer } = rag.getAnswer(userQuery);
+      let response;
+      if (found && answer) {
+        response = answer;
+      } else {
+        response = '🤖 Hola, soy el bot de WebMerge Studio.\n\nNo encontré información específica sobre tu consulta. ¿Podés reformularla o escribirme con otras palabras?\n\nTambién podés consultar nuestra web: https://webmerge.studio';
+      }
+
+      await msg.reply(response);
+      console.log(`  ✅ Respondido a ${userNumber}: "${response.substring(0, 60)}..."`);
+
+      db.prepare(
+        'INSERT INTO whatsapp_messages (number, message, response) VALUES (?, ?, ?)'
+      ).run(userNumber, userQuery, response);
+    } catch (err) {
+      console.error(`  ❌ Error en [${source}]:`, err.message);
+    }
+  };
+
+  client.on('message', msg => handleMessage(msg, 'message'));
+
+  client.on('message_create', msg => {
+    if (msg.fromMe) return;
+    handleMessage(msg, 'message_create');
   });
 
-  client.on('auth_failure', () => {
+  client.on('auth_failure', msg => {
     status = 'auth_failure';
-    console.error('❌ WhatsApp auth failure');
+    console.error('❌ WhatsApp auth failure:', msg);
   });
 
   try {
@@ -88,9 +115,14 @@ function getStatus() {
 }
 
 function getMessages(limit = 50) {
-  return db.prepare(
-    'SELECT * FROM whatsapp_messages ORDER BY created_at DESC LIMIT ?'
-  ).all(limit);
+  try {
+    return db.prepare(
+      'SELECT * FROM whatsapp_messages ORDER BY created_at DESC LIMIT ?'
+    ).all(limit);
+  } catch (err) {
+    console.error('Error getting WhatsApp messages:', err.message);
+    return [];
+  }
 }
 
 module.exports = { initWhatsApp, getStatus, getMessages };
