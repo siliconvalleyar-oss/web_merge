@@ -200,39 +200,87 @@ async function loadWhatsApp() {
   el.textContent = status.status === 'connected' ? '✅ Conectado' :
                    status.status === 'qr_ready' ? '📱 Escanea el código QR' :
                    status.status === 'disconnected' ? '❌ Desconectado' :
-                   '⚠ Error de conexión';
+                   '⚠ Error';
 
   if (status.qrCode) {
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(status.qrCode)}&size=260x260`;
-    $('whatsappQr').innerHTML = `<img src="${qrImg}" alt="QR Code para WhatsApp">`;
+    $('whatsappQr').innerHTML = `<img src="${qrImg}" alt="QR Code">`;
   } else {
     $('whatsappQr').innerHTML = '';
   }
 
-  const msgs = await api('/whatsapp-messages');
-  if (msgs && !msgs.error) {
-    if (msgs.length > LAST_MSG_COUNT && LAST_MSG_COUNT > 0) {
-      const nuevas = msgs.length - LAST_MSG_COUNT;
-      showToast(`${nuevas} mensaje${nuevas > 1 ? 's' : ''} nuevo${nuevas > 1 ? 's' : ''} de WhatsApp`);
-    }
-    LAST_MSG_COUNT = msgs.length;
-    const badge = document.querySelector('[data-tab="whatsapp"] .badge-msg');
-    if (badge) badge.textContent = msgs.filter(m => !m.is_read).length;
+  loadConversations();
+}
 
-    $('whatsappBody').innerHTML = msgs.map(m =>
-      `<tr>
-        <td class="nowrap">${new Date(m.created_at).toLocaleString()}</td>
-        <td><strong>${m.number}</strong></td>
-        <td>${m.message}</td>
-        <td style="color:var(--color-text-muted,#9999aa);font-size:13px">${m.response ? m.response.substring(0, 80) + '…' : '—'}</td>
-      </tr>`
-    ).join('');
+async function loadConversations() {
+  const convs = await api('/whatsapp-conversations');
+  if (!convs || convs.error) return;
+
+  const totalUnread = convs.reduce((s, c) => s + (c.unread || 0), 0);
+  $('waUnreadCount').textContent = totalUnread;
+  $('waUnreadCount').style.display = totalUnread ? 'inline' : 'none';
+
+  const badge = document.querySelector('[data-tab="whatsapp"] .badge-msg');
+  if (badge) {
+    badge.textContent = totalUnread;
+    badge.style.display = totalUnread ? 'inline-flex' : 'none';
   }
+
+  $('waConvList').innerHTML = convs.map(c => `
+    <div class="wa-conv-item ${c.unread > 0 ? 'unread' : ''}" onclick="openConversation('${c.number}')">
+      <div class="wa-conv-top">
+        <span class="wa-conv-number">${c.number}</span>
+        ${c.unread > 0 ? `<span class="wa-conv-unread">${c.unread}</span>` : ''}
+      </div>
+      <div class="wa-conv-preview">${c.last_message || ''}</div>
+      <div class="wa-conv-date">${c.last_date ? new Date(c.last_date).toLocaleString() : ''}</div>
+    </div>
+  `).join('');
+}
+
+let currentConv = null;
+
+async function openConversation(number) {
+  currentConv = number;
+  const msgs = await api(`/whatsapp-conversation/${encodeURIComponent(number)}`);
+  if (!msgs || msgs.error) return;
+
+  const unread = msgs.filter(m => !m.is_read).length;
+  $('waMainHeader').innerHTML = `
+    <span>${number} ${unread > 0 ? `<span class="wa-conv-unread" style="margin-left:8px">${unread} nuevos</span>` : ''}</span>
+    <div class="wa-actions">
+      <button class="wa-btn read" onclick="markRead('${number}')">✓ Leído</button>
+      <button class="wa-btn unread" onclick="markUnread('${number}')">✗ No leído</button>
+    </div>
+  `;
+
+  $('waMessages').innerHTML = msgs.map(m => `
+    <div class="wa-msg ${m.response ? 'bot' : 'client'}">
+      ${m.response || m.message}
+      <div class="wa-msg-time">${new Date(m.created_at).toLocaleString()} ${m.is_read ? '✓' : ''}</div>
+    </div>
+  `).join('');
+
+  $('waMessages').scrollTop = $('waMessages').scrollHeight;
+}
+
+async function markRead(number) {
+  await api(`/whatsapp-conversation/${encodeURIComponent(number)}/read`, { method: 'PUT' });
+  loadConversations();
+  if (currentConv === number) openConversation(number);
+}
+
+async function markUnread(number) {
+  await api(`/whatsapp-conversation/${encodeURIComponent(number)}/unread`, { method: 'PUT' });
+  loadConversations();
 }
 
 function startWhatsAppPolling() {
   stopWhatsAppPolling();
-  WHATSAPP_POLLER = setInterval(loadWhatsApp, 5000);
+  WHATSAPP_POLLER = setInterval(() => {
+    loadConversations();
+    if (currentConv) openConversation(currentConv);
+  }, 5000);
 }
 
 function stopWhatsAppPolling() {

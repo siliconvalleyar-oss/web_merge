@@ -124,13 +124,22 @@
         <section id="tabWhatsapp" class="tab-content">
           <div class="tab-header"><h3>WhatsApp Bot</h3></div>
           <div id="whatsappStatus" class="whatsapp-status"></div>
-          <div id="whatsappQr" class="whatsapp-qr"></div>
-          <div class="table-wrap" id="whatsappMessagesWrap">
-            <h4>Mensajes recientes</h4>
-            <table id="whatsappTable">
-              <thead><tr><th>Fecha</th><th>Número</th><th>Mensaje</th><th>Respuesta</th></tr></thead>
-              <tbody id="whatsappBody"></tbody>
-            </table>
+          <div id="whatsappQr" class="whatsapp-qr"></div><div id="whatsappLayout" class="wa-layout">
+            <div class="wa-sidebar" id="waSidebar">
+              <div class="wa-sidebar-header">
+                <h4>Conversaciones</h4>
+                <span class="wa-count" id="waUnreadCount">0</span>
+              </div>
+              <div class="wa-conv-list" id="waConvList"></div>
+            </div>
+            <div class="wa-main" id="waMain">
+              <div class="wa-main-header" id="waMainHeader">
+                <span>Seleccioná una conversación</span>
+              </div>
+              <div class="wa-messages" id="waMessages">
+                <div class="wa-empty">Hacé clic en una conversación para ver los mensajes</div>
+              </div>
+            </div>
           </div>
         </section>
       </main>

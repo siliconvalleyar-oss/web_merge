@@ -40,6 +40,7 @@ db.exec(`
     number      TEXT NOT NULL,
     message     TEXT NOT NULL,
     response    TEXT,
+    is_read     INTEGER DEFAULT 0,
     created_at  TEXT DEFAULT (datetime('now'))
   );
 
@@ -51,6 +52,8 @@ db.exec(`
     created_at    TEXT DEFAULT (datetime('now'))
   );
 `);
+
+try { db.exec('ALTER TABLE whatsapp_messages ADD COLUMN is_read INTEGER DEFAULT 0'); } catch {}
 
 const insertConfig = db.prepare(
   'INSERT OR IGNORE INTO config (config_key, config_value) VALUES (?, ?)'

@@ -129,4 +129,40 @@ router.get('/whatsapp-messages', authMiddleware, (req, res) => {
   }
 });
 
+router.get('/whatsapp-conversations', authMiddleware, (req, res) => {
+  try {
+    const convs = whatsapp.getConversations();
+    res.json(convs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/whatsapp-conversation/:number', authMiddleware, (req, res) => {
+  try {
+    const msgs = whatsapp.getConversationMessages(req.params.number);
+    res.json(msgs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/whatsapp-conversation/:number/read', authMiddleware, (req, res) => {
+  try {
+    whatsapp.markConversationRead(req.params.number);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/whatsapp-conversation/:number/unread', authMiddleware, (req, res) => {
+  try {
+    whatsapp.markConversationUnread(req.params.number);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

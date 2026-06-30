@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
   number      TEXT NOT NULL,
   message     TEXT NOT NULL,
   response    TEXT,
+  is_read     INTEGER DEFAULT 0,
   created_at  TEXT DEFAULT (datetime('now'))
 );
 

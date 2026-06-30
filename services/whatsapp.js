@@ -133,11 +133,6 @@ Mientras tanto, escribí *menu* para ver las opciones disponibles.`;
 
   client.on('message', msg => handleMessage(msg, 'message'));
 
-  client.on('message_create', msg => {
-    if (msg.fromMe) return;
-    handleMessage(msg, 'message_create');
-  });
-
   client.on('auth_failure', msg => {
     status = 'auth_failure';
     console.error('❌ WhatsApp auth failure:', msg);
@@ -166,4 +161,48 @@ function getMessages(limit = 50) {
   }
 }
 
-module.exports = { initWhatsApp, getStatus, getMessages };
+function getConversations() {
+  try {
+    return db.prepare(`
+      SELECT number, 
+             COUNT(*) as total,
+             SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unread,
+             MAX(created_at) as last_date,
+             (SELECT message FROM whatsapp_messages WHERE number = w.number ORDER BY created_at DESC LIMIT 1) as last_message,
+             (SELECT response FROM whatsapp_messages WHERE number = w.number ORDER BY created_at DESC LIMIT 1) as last_response
+      FROM whatsapp_messages w
+      GROUP BY number
+      ORDER BY last_date DESC
+    `).all();
+  } catch (err) {
+    console.error('Error getting conversations:', err.message);
+    return [];
+  }
+}
+
+function getConversationMessages(number) {
+  try {
+    return db.prepare(
+      'SELECT * FROM whatsapp_messages WHERE number = ? ORDER BY created_at ASC'
+    ).all(number);
+  } catch (err) {
+    console.error('Error getting conversation:', err.message);
+    return [];
+  }
+}
+
+function markConversationRead(number) {
+  try {
+    db.prepare('UPDATE whatsapp_messages SET is_read = 1 WHERE number = ?').run(number);
+    return true;
+  } catch { return false; }
+}
+
+function markConversationUnread(number) {
+  try {
+    db.prepare('UPDATE whatsapp_messages SET is_read = 0 WHERE number = ?').run(number);
+    return true;
+  } catch { return false; }
+}
+
+module.exports = { initWhatsApp, getStatus, getMessages, getConversations, getConversationMessages, markConversationRead, markConversationUnread };
