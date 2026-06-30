@@ -186,10 +186,13 @@ tr:hover td{background:rgba(108,92,231,.03)}
 .wa-main-header .wa-actions{display:flex;gap:8px}
 .wa-messages{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:8px}
 .wa-empty{text-align:center;color:#555;margin:auto;font-size:14px}
-.wa-msg{max-width:80%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5;word-wrap:break-word}
-.wa-msg.client{align-self:flex-start;background:#2d2d44;color:#e8e8f0;border-bottom-left-radius:4px}
-.wa-msg.bot{align-self:flex-end;background:#6c5ce7;color:#fff;border-bottom-right-radius:4px}
-.wa-msg-time{font-size:10px;color:#9999aa;margin-top:4px;text-align:right}
+.wa-msg{max-width:80%;padding:4px 0;line-height:1.5;display:flex;flex-direction:column}
+.wa-msg.client{align-self:flex-end;align-items:flex-end}
+.wa-msg.bot{align-self:flex-start;align-items:flex-start}
+.wa-bubble{padding:10px 14px;font-size:13px;word-wrap:break-word;max-width:100%}
+.wa-msg.client .wa-bubble{background:#2d2d44;color:#e8e8f0;border-radius:12px 12px 4px 12px}
+.wa-msg.bot .wa-bubble{background:#6c5ce7;color:#fff;border-radius:12px 12px 12px 4px}
+.wa-msg-time{font-size:10px;color:#9999aa;margin-top:2px;padding:0 4px}
 .wa-msg.bot .wa-msg-time{color:rgba(255,255,255,.6)}
 .wa-btn{background:none;border:1px solid #2d2d44;border-radius:6px;color:#9999aa;padding:4px 12px;font-size:12px;cursor:pointer}
 .wa-btn:hover{background:#2d2d44;color:#e8e8f0}

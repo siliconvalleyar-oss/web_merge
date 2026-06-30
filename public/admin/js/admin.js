@@ -938,12 +938,17 @@ async function openConversation(number) {
     </div>
   `;
 
-  $('waMessages').innerHTML = msgs.map(m => `
-    <div class="wa-msg ${m.response ? 'bot' : 'client'}">
-      ${m.response || m.message}
-      <div class="wa-msg-time">${new Date(m.created_at).toLocaleString()} ${m.is_read ? '✓' : ''}</div>
-    </div>
-  `).join('') + `
+  $('waMessages').innerHTML = msgs.map(m => {
+    const time = new Date(m.created_at).toLocaleString();
+    let bubbles = '';
+    if (m.message) {
+      bubbles += `<div class="wa-msg client"><div class="wa-bubble">${m.message}</div><div class="wa-msg-time">${time}</div></div>`;
+    }
+    if (m.response) {
+      bubbles += `<div class="wa-msg bot"><div class="wa-bubble">${m.response}</div><div class="wa-msg-time">${time} ${m.is_read ? '✓' : ''}</div></div>`;
+    }
+    return bubbles;
+  }).join('') + `
     <div class="wa-send-bar" id="waSendBar">
       <input type="text" id="waSendInput" class="wa-send-input" placeholder="Escribí un mensaje..." data-number="${number}">
       <button class="wa-btn-send" id="waSendBtn">Enviar</button>
