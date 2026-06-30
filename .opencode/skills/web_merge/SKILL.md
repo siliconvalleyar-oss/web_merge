@@ -1,78 +1,107 @@
-# Web Merge Final Skill
+# WebMerge Studio Skill
 
 ## Descripción
-Proyecto mergeado que unifica tres tipos de página web en un solo proyecto funcional:
-1. **Tienda C++ (tienda_web_server)** — Backend robusto, diseño glassmorphism dark, SPA vanilla JS
-2. **Animation Web Skill (web_animation_skill)** — Animaciones GSAP + AOS, chatbot, paleta dinámica
-3. **Web Rive (web_rive)** — Animaciones Rive vectoriales, panel admin completo, sistema de pedidos
+Full-stack landing page con RAG chatbot + WhatsApp integrado + panel de administración completo. Unifica gestión de productos, clientes, pedidos, FAQs, y configuración de tienda en un solo proyecto.
 
 ## Stack Tecnológico
-- **Backend:** Node.js + Express (unifica lo mejor de C++ y PHP)
+- **Backend:** Node.js + Express + better-sqlite3 (SQLite WAL mode)
 - **Frontend:** HTML5 + CSS3 + Vanilla JS (SPA sin frameworks)
-- **Animaciones:** GSAP 3.12 + ScrollTrigger + AOS 2.3 + Rive 2.0
-- **Diseño:** Glassmorphism (backdrop-filter), dark theme, responsive
-- **Datos:** JSON files (simple, portable)
+- **WhatsApp:** whatsapp-web.js (real device auth via QR)
+- **Autenticación:** JWT + bcrypt, roles: master, stock, response
+- **Diseño:** Dark theme, glassmorphism, sidebar admin layout, paletas de colores configurables
 
-## Estructura
+## Estructura actual
 ```
 web_merge_final/
-├── server.js                 # Servidor Express (API REST)
+├── server.js                 # Servidor Express (migraciones DB, rutas, init)
 ├── package.json              # Dependencias
+├── config/config.js          # Config (PORT, JWT_SECRET)
+├── database/db.js            # SQLite connection (better-sqlite3, WAL)
+├── setup-db.js               # Seed inicial de DB
+├── sql/schema.sql            # Esquema de referencia
+├── routes/
+│   ├── admin.js              # CRUD admin (productos, clientes, usuarios, FAQs, WhatsApp, config)
+│   ├── config.js             # Config pública (GET/PUT)
+│   ├── faqs.js               # FAQs públicas
+│   ├── contact.js            # Formulario de contacto
+│   └── chat.js               # RAG chatbot endpoint
+├── services/
+│   └── whatsapp.js           # WhatsApp bot (catálogo, auto-client, sendMessage)
 ├── public/
-│   ├── index.html            # SPA principal
+│   ├── index.html            # Landing page pública
 │   ├── css/styles.css        # Estilos glassmorphism + animaciones
-│   ├── js/
-│   │   ├── main.js           # Lógica SPA (navegación, carrito, auth)
-│   │   └── animations.js     # GSAP + AOS + Rive animations
-│   ├── assets/riv/           # Archivos de animación Rive (.riv)
+│   ├── js/main.js            # Lógica SPA
 │   └── admin/
-│       └── index.html        # Panel de administración
+│       ├── index.html        # Admin SPA (sidebar + pestañas)
+│       ├── js/admin.js       # Admin logic (CRUD, paletas, colores)
+│       └── css/admin.css     # Admin styles (CSS custom properties)
 ├── data/
-│   ├── productos.json        # Catálogo de productos
-│   ├── usuarios.json         # Usuarios y credenciales
-│   ├── categorias.json       # Categorías con iconos y colores
-│   ├── pedidos.json          # Historial de pedidos
-│   ├── config.json           # Configuración de la tienda
-│   └── chatbot_conocimiento.json  # Base de conocimiento del chatbot
-├── .opencode/skills/web_merge/SKILL.md  # Este skill
-└── docs/
-    ├── CHANGELOG.md
-    └── TODO.md
+│   └── webmerge.db           # SQLite database (auto-creada)
+├── .opencode/skills/web_merge/SKILL.md
+└── script_tools/start.sh     # Script de inicio
 ```
+
+## Base de Datos (SQLite)
+Tablas principales en `data/webmerge.db`:
+- **config** — Configuración del sitio y admin (clave-valor)
+- **faqs** — Preguntas frecuentes con categorías
+- **contacts** — Mensajes del formulario de contacto
+- **whatsapp_messages** — Mensajes de WhatsApp entrantes/salientes
+- **clients** — Clientes con phone, name, address, email, notes, client_number (CLI-XXX)
+- **products** — Productos con name, description, price, stock, category, image_url, enabled
+- **users** — Usuarios admin con rol: master, stock, response
+
+## Roles de Admin
+- **master** — Acceso total (productos, clientes, usuarios, config, WhatsApp)
+- **stock** — Solo productos (CRUD)
+- **response** — Solo WhatsApp (ver conversaciones, responder) + clients (read-only)
 
 ## API Endpoints
 
-### Productos
-- `GET /api/productos` — Lista todos (query: `categoria`, `busqueda`, `pagina`, `por_pagina`)
-- `GET /api/productos/:id` — Detalle de producto
+### Públicos
+- `GET /api/config` — Configuración del sitio
+- `GET /api/faqs` — FAQs públicas (enabled=1)
+- `POST /api/contact` — Enviar formulario de contacto
+- `POST /api/chat` — Chatbot RAG (body: `{mensaje}`)
 
-### Autenticación
-- `POST /api/auth/login` — Iniciar sesión (body: `{usuario, password}`)
-- `GET /api/auth/session` — Verificar sesión activa
+### Admin (requiere JWT Bearer token)
+- `POST /api/admin/login` — Login (body: `{username, password}`)
+- `GET /api/admin/verify` — Verificar token
+- `GET /api/admin/config` — Toda la config
+- `GET/POST /api/admin/faqs` — CRUD FAQs
+- `PUT/DELETE /api/admin/faqs/:id`
+- `GET /api/admin/contacts` — Contactos recibidos
+- `PUT /api/admin/contacts/:id/read`
+- `GET/POST /api/admin/clients` — CRUD clientes
+- `PUT/DELETE /api/admin/clients/:id`
+- `GET /api/admin/clients/export` — Exportar vCard
+- `GET /api/admin/clients/by-phone/:phone`
+- `GET/POST /api/admin/products` — CRUD productos (master/stock)
+- `PUT/DELETE /api/admin/products/:id`
+- `GET/POST /api/admin/users` — CRUD usuarios (master only)
+- `PUT/DELETE /api/admin/users/:id`
+- `GET /api/admin/whatsapp-status`
+- `GET /api/admin/whatsapp-messages`
+- `GET /api/admin/whatsapp-conversations`
+- `GET /api/admin/whatsapp-conversation/:number`
+- `PUT /api/admin/whatsapp-conversation/:number/read`
+- `PUT /api/admin/whatsapp-conversation/:number/unread`
+- `POST /api/admin/whatsapp-stop`
+- `POST /api/admin/whatsapp-send` — Enviar mensaje (master/response)
 
-### Carrito (requiere auth)
-- `POST /api/carrito/agregar` — Agregar producto (body: `{producto_id, cantidad}`)
-- `GET /api/carrito` — Ver carrito con detalles
-- `POST /api/carrito/actualizar` — Cambiar cantidad (body: `{producto_id, cantidad}`)
-- `DELETE /api/carrito/:id` — Eliminar del carrito
+## Paletas de Color
+- **15 paletas de sitio** — Default, Minimalista, Pasteles, Colorido, Empresarial, Moderno, Atractivo, Oceánico, Atardecer, Naturaleza, Tecno, Vintage, Oscuro Elegante, Rosa, Solar
+- **15 paletas de admin** — Dark, Light, Navy, Forest, Midnight, Warm, Grafito, Corporativo, Púrpura Oscuro, Verde Menta, Terracota, Pizarra, Cereza, Arena
 
-### Checkout (requiere auth)
-- `POST /api/checkout` — Procesar pedido (body: `{nombre, direccion, email, tarjeta}`)
-- `GET /api/pedidos` — Historial del usuario
+Variables CSS para admin: `--admin-bg`, `--admin-sidebar`, `--admin-accent`, `--admin-text`, `--admin-border`, `--admin-surface`
 
-### Chat
-- `POST /api/chat` — Enviar mensaje al chatbot (body: `{mensaje}`)
-
-### Admin (requiere auth + rol admin)
-- `GET /api/admin/stats` — Estadísticas del dashboard
-- `GET /api/admin/pedidos` — Todos los pedidos
-- `GET /api/admin/usuarios` — Todos los usuarios
-- `POST/PUT/DELETE /api/admin/productos/:id` — CRUD productos
-- `POST /api/admin/config` — Guardar configuración
+## Layout Admin
+- Sidebar vertical izquierdo con tabs (Dashboard, Config, FAQs, Contacts, Clients, Products, Users, WhatsApp)
+- Contenido a la derecha
+- WhatsApp: sidebar de conversaciones a la derecha (flex-direction: row-reverse)
 
 ## Datos Demo
-- **Admin:** admin / admin
-- **Cliente:** cliente / cliente
+- **Admin:** admin / admin123 (rol: master)
 
 ## Cómo usar
 ```bash
@@ -80,30 +109,14 @@ cd web_merge_final
 npm install
 npm start
 # Abrir http://localhost:8080
+# Admin: http://localhost:8080/admin/
 ```
 
-## Animaciones Incluidas
-1. **GSAP**: Hero entrance, scroll-triggered cards, hover effects, button pulses
-2. **AOS**: Fade-up/down en cards, header, hero sections on scroll
-3. **Rive**: Canvas-based vector animations en hero (fallback a iconos animados si no hay .riv)
-4. **CSS**: Glassmorphism (blur), transitions suaves, spin loader, badge pulse, toast in/out
-5. **Custom**: Ripple en botones, stock badge color-coding, hero carousel
-
-## Técnicas Mergeadas por Proyecto
-
-| Técnica | tienda_web_server | web_animation_skill | web_rive |
-|---------|-------------------|---------------------|----------|
-| Glassmorphism | ✅ backdrop-filter | ✅ backdrop-filter | — |
-| Dark theme | ✅ radial gradients | — | ✅ |
-| SPA routing | ✅ section toggle | — | — |
-| GSAP animations | — | ✅ ScrollTrigger | — |
-| AOS scroll | — | ✅ fade-up | — |
-| Rive canvas | — | — | ✅ .riv files |
-| Chatbot | — | ✅ WhatsApp + KB | ✅ knowledge base |
-| Admin panel | — | ✅ color config | ✅ full CRUD |
-| Cart system | ✅ server-side | ✅ localStorage | ✅ hybrid |
-| Auth tokens | ✅ Bearer token | — | ✅ session |
-| Responsive | ✅ media queries | ✅ mobile menu | ✅ |
-| Toast notifications | ✅ auto-dismiss | ✅ showToast | ✅ |
-| Product filters | ✅ categories | ✅ search | ✅ pagination |
-| Checkout flow | ✅ full form | ✅ order placement | ✅ invoice |
+## Convenciones
+- Respuestas del bot: usar emojis solo si el usuario los usa
+- DB: WAL mode, prepared statements con better-sqlite3
+- JWT expira en 24h
+- Productos: precio REAL, stock INTEGER, enabled BOOLEAN (0/1)
+- Clientes: client_number auto-generado CLI-XXX
+- WhatsApp: auto-crea cliente cuando un número nuevo escribe al bot
+- Errores: responder con `{ error: mensaje }` en español
