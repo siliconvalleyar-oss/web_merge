@@ -33,10 +33,10 @@ $('loginForm').addEventListener('submit', async e => {
     body: JSON.stringify({ username: $('loginUser').value, password: $('loginPass').value })
   });
   const data = await res.json();
-  if (data.token) {
+    if (data.token) {
     TOKEN = data.token;
     USER = data.user;
-    $('userBadge').textContent = `${data.user.username} (${data.user.role})`;
+    $('userBadge').textContent = `${data.user.username} (${roleLabel(data.user.role)})`;
     showView('dashboardView');
     loadDashboard();
   } else {
@@ -57,6 +57,9 @@ document.querySelectorAll('.tab').forEach(tab => {
     stopWhatsAppPolling();
     if (tab.dataset.tab === 'faqs') loadFAQs();
     if (tab.dataset.tab === 'contacts') loadContacts();
+    if (tab.dataset.tab === 'clients') loadClients();
+    if (tab.dataset.tab === 'products') loadProducts();
+    if (tab.dataset.tab === 'users') loadUsers();
     if (tab.dataset.tab === 'whatsapp') { loadWhatsApp(); startWhatsAppPolling(); }
     if (tab.dataset.tab === 'config') loadConfig();
   });
@@ -66,6 +69,10 @@ document.querySelectorAll('.tab').forEach(tab => {
 async function loadDashboard() {
   loadFAQs();
   loadConfig();
+}
+
+function roleLabel(role) {
+  return ({ master: 'Master', stock: 'Stock', response: 'Respuesta' })[role] || role;
 }
 
 /* ── FAQs ────────────────────────────────────────────────── */
@@ -134,8 +141,100 @@ async function deleteFaq(id) {
   if (res.success) loadFAQs();
 }
 
+/* ── Palette presets ─────────────────────────────────────── */
+const PALETTES = [
+  {
+    id: 'default', name: 'Default',
+    colors: { primary_color: '#6c5ce7', secondary_color: '#00cec9', accent_color: '#fd79a8', bg_color: '#0a0a14', surface_color: '#1a1a2e', text_color: '#e8e8f0', text_muted: '#9999aa', border_color: '#2d2d44' }
+  },
+  {
+    id: 'minimalista', name: 'Minimalista',
+    colors: { primary_color: '#2d2d2d', secondary_color: '#6b6b6b', accent_color: '#9a9a9a', bg_color: '#fafafa', surface_color: '#ffffff', text_color: '#1a1a1a', text_muted: '#888888', border_color: '#e0e0e0' }
+  },
+  {
+    id: 'pasteles', name: 'Pasteles',
+    colors: { primary_color: '#b8a9e8', secondary_color: '#a8d8ea', accent_color: '#f8b4c8', bg_color: '#fef9f0', surface_color: '#ffffff', text_color: '#4a4a6a', text_muted: '#a09bb0', border_color: '#e8e0f0' }
+  },
+  {
+    id: 'colorido', name: 'Colorido',
+    colors: { primary_color: '#ff6b6b', secondary_color: '#4ecdc4', accent_color: '#ffe66d', bg_color: '#f7fff7', surface_color: '#ffffff', text_color: '#2d3436', text_muted: '#636e72', border_color: '#dfe6e9' }
+  },
+  {
+    id: 'empresarial', name: 'Empresarial',
+    colors: { primary_color: '#1a365d', secondary_color: '#2b6cb0', accent_color: '#ecc94b', bg_color: '#f7fafc', surface_color: '#ffffff', text_color: '#1a202c', text_muted: '#718096', border_color: '#e2e8f0' }
+  },
+  {
+    id: 'moderno', name: 'Moderno',
+    colors: { primary_color: '#7c3aed', secondary_color: '#06b6d4', accent_color: '#f43f5e', bg_color: '#09090b', surface_color: '#18181b', text_color: '#fafafa', text_muted: '#a1a1aa', border_color: '#27272a' }
+  },
+  {
+    id: 'atractivo', name: 'Atractivo',
+    colors: { primary_color: '#e74c3c', secondary_color: '#f39c12', accent_color: '#2ecc71', bg_color: '#1a1a2e', surface_color: '#16213e', text_color: '#ecf0f1', text_muted: '#95a5a6', border_color: '#2c3e50' }
+  },
+  {
+    id: 'oceanico', name: 'Oceánico',
+    colors: { primary_color: '#0077b6', secondary_color: '#00b4d8', accent_color: '#fabc3c', bg_color: '#f0f8ff', surface_color: '#ffffff', text_color: '#023e8a', text_muted: '#7f9fbf', border_color: '#cce5ff' }
+  },
+  {
+    id: 'atardecer', name: 'Atardecer',
+    colors: { primary_color: '#e07c3c', secondary_color: '#d45d79', accent_color: '#f4d03f', bg_color: '#1a0f14', surface_color: '#2a1a20', text_color: '#fce4d6', text_muted: '#c4a090', border_color: '#4a2a30' }
+  },
+  {
+    id: 'naturaleza', name: 'Naturaleza',
+    colors: { primary_color: '#2d6a4f', secondary_color: '#52b788', accent_color: '#ff9e00', bg_color: '#f0faf0', surface_color: '#ffffff', text_color: '#1b4332', text_muted: '#6a8f7a', border_color: '#c8e6c9' }
+  },
+  {
+    id: 'tecno', name: 'Tecno',
+    colors: { primary_color: '#00f5d4', secondary_color: '#fb5607', accent_color: '#ff006e', bg_color: '#000814', surface_color: '#001233', text_color: '#e0fbfc', text_muted: '#98c1d9', border_color: '#003366' }
+  },
+  {
+    id: 'vintage', name: 'Vintage',
+    colors: { primary_color: '#8b5a2b', secondary_color: '#cd853f', accent_color: '#deb887', bg_color: '#fdf5e6', surface_color: '#faf0dc', text_color: '#3e2723', text_muted: '#8d6e63', border_color: '#d7ccc8' }
+  },
+  {
+    id: 'oscuro-elegante', name: 'Oscuro Elegante',
+    colors: { primary_color: '#c9a84c', secondary_color: '#5c5c5c', accent_color: '#ffffff', bg_color: '#0d0d0d', surface_color: '#1a1a1a', text_color: '#e8e8e8', text_muted: '#808080', border_color: '#333333' }
+  },
+  {
+    id: 'rosa', name: 'Rosa',
+    colors: { primary_color: '#d63384', secondary_color: '#f06595', accent_color: '#fcc2d7', bg_color: '#fff0f6', surface_color: '#ffffff', text_color: '#4a0024', text_muted: '#c0819a', border_color: '#f8c8dc' }
+  },
+  {
+    id: 'solar', name: 'Solar',
+    colors: { primary_color: '#f9a825', secondary_color: '#ff6f00', accent_color: '#00c853', bg_color: '#fff8e1', surface_color: '#ffffff', text_color: '#3e2723', text_muted: '#a09070', border_color: '#ffe082' }
+  },
+];
+
+function applyPalette(colors) {
+  Object.entries(colors).forEach(([key, value]) => {
+    const el = document.querySelector(`[name="${key}"]`);
+    if (el && el.type === 'color') el.value = value;
+  });
+  const primary = document.querySelector('[name="primary_color"]');
+  if (primary) {
+    const muted = document.querySelector('[name="primary_muted"]');
+    if (muted) muted.value = primary.value + '20';
+  }
+}
+
+function renderPalettes() {
+  const grid = $('paletteGrid');
+  if (!grid) return;
+  grid.innerHTML = PALETTES.map(p => {
+    const c = p.colors;
+    const swatches = [c.primary_color, c.secondary_color, c.accent_color, c.bg_color, c.surface_color, c.text_color].join(',');
+    return `<div class="palette-item" data-palette="${p.id}" title="${p.name}" onclick="applyPalette(PALETTES.find(x=>x.id==='${p.id}').colors)">
+      <div class="palette-swatches">
+        ${[c.primary_color, c.secondary_color, c.accent_color, c.bg_color, c.surface_color].map(h => `<span style="background:${h}"></span>`).join('')}
+      </div>
+      <span class="palette-item-name">${p.name}</span>
+    </div>`;
+  }).join('');
+}
+
 /* ── Config ──────────────────────────────────────────────── */
 async function loadConfig() {
+  renderPalettes();
   try {
     const c = await (await fetch('/api/config')).json();
     if (!c.error) {
@@ -148,6 +247,7 @@ async function loadConfig() {
       });
     }
   } catch {}
+  loadAdminConfig();
 }
 
 $('saveConfigBtn').addEventListener('click', async () => {
@@ -161,6 +261,133 @@ $('saveConfigBtn').addEventListener('click', async () => {
   });
   const result = await res.json();
   if (result.success) {
+    $('configSaved').classList.remove('hidden');
+    setTimeout(() => $('configSaved').classList.add('hidden'), 3000);
+  }
+});
+
+/* ── Admin Palette presets ────────────────────────────────── */
+const ADMIN_PALETTES = [
+  {
+    id: 'admin-dark', name: 'Dark (default)',
+    colors: { admin_bg: '#0a0a14', admin_sidebar: '#141425', admin_accent: '#6c5ce7', admin_text: '#e8e8f0', admin_border: '#2d2d44', admin_surface: '#1a1a2e' }
+  },
+  {
+    id: 'admin-light', name: 'Light',
+    colors: { admin_bg: '#f5f5f5', admin_sidebar: '#ffffff', admin_accent: '#6c5ce7', admin_text: '#1a1a1a', admin_border: '#e0e0e0', admin_surface: '#ffffff' }
+  },
+  {
+    id: 'admin-navy', name: 'Navy',
+    colors: { admin_bg: '#0f1923', admin_sidebar: '#1a2a3a', admin_accent: '#4fc3f7', admin_text: '#e0e6ed', admin_border: '#2a3a4a', admin_surface: '#152232' }
+  },
+  {
+    id: 'admin-forest', name: 'Forest',
+    colors: { admin_bg: '#0d1f11', admin_sidebar: '#1a2e1e', admin_accent: '#66bb6a', admin_text: '#e0f0e0', admin_border: '#2a4a2e', admin_surface: '#162a1a' }
+  },
+  {
+    id: 'admin-midnight', name: 'Midnight',
+    colors: { admin_bg: '#0a0a1a', admin_sidebar: '#12122a', admin_accent: '#b388ff', admin_text: '#e0e0f0', admin_border: '#2a2a4a', admin_surface: '#1a1a2e' }
+  },
+  {
+    id: 'admin-warm', name: 'Warm',
+    colors: { admin_bg: '#1a1410', admin_sidebar: '#2a1e18', admin_accent: '#ff8a65', admin_text: '#f0e8e0', admin_border: '#3a2e28', admin_surface: '#221a14' }
+  },
+  {
+    id: 'admin-grafito', name: 'Grafito',
+    colors: { admin_bg: '#121212', admin_sidebar: '#1e1e1e', admin_accent: '#bb86fc', admin_text: '#e0e0e0', admin_border: '#333333', admin_surface: '#1a1a1a' }
+  },
+  {
+    id: 'admin-corporativo', name: 'Corporativo',
+    colors: { admin_bg: '#f0f4f8', admin_sidebar: '#ffffff', admin_accent: '#1565c0', admin_text: '#1a202c', admin_border: '#cbd5e0', admin_surface: '#ffffff' }
+  },
+  {
+    id: 'admin-purpura', name: 'Púrpura Oscuro',
+    colors: { admin_bg: '#0e0a1a', admin_sidebar: '#1a122a', admin_accent: '#d4a0ff', admin_text: '#e8e0f0', admin_border: '#3a2a5a', admin_surface: '#1a1030' }
+  },
+  {
+    id: 'admin-menta', name: 'Verde Menta',
+    colors: { admin_bg: '#e8f5e9', admin_sidebar: '#ffffff', admin_accent: '#00897b', admin_text: '#1b3a2a', admin_border: '#c8e6c9', admin_surface: '#f1f8e9' }
+  },
+  {
+    id: 'admin-terracota', name: 'Terracota',
+    colors: { admin_bg: '#1a0e0a', admin_sidebar: '#2a1a12', admin_accent: '#e07c5c', admin_text: '#f0e0d8', admin_border: '#4a2a1a', admin_surface: '#221812' }
+  },
+  {
+    id: 'admin-pizarra', name: 'Pizarra',
+    colors: { admin_bg: '#1a1d23', admin_sidebar: '#252a33', admin_accent: '#7ec8e3', admin_text: '#d0d8e0', admin_border: '#3a4050', admin_surface: '#1e232d' }
+  },
+  {
+    id: 'admin-cereza', name: 'Cereza',
+    colors: { admin_bg: '#1a0a0e', admin_sidebar: '#2a121a', admin_accent: '#ff6b8a', admin_text: '#f0e0e4', admin_border: '#4a1a28', admin_surface: '#221018' }
+  },
+  {
+    id: 'admin-arena', name: 'Arena',
+    colors: { admin_bg: '#f5efe6', admin_sidebar: '#ffffff', admin_accent: '#c9a84c', admin_text: '#2d2418', admin_border: '#d4c9b8', admin_surface: '#faf5ef' }
+  },
+];
+
+function applyAdminPalette(colors) {
+  Object.entries(colors).forEach(([key, value]) => {
+    const el = document.querySelector(`[name="${key}"]`);
+    if (el && el.type === 'color') el.value = value;
+  });
+}
+
+function renderAdminPalettes() {
+  const grid = $('adminPaletteGrid');
+  if (!grid) return;
+  grid.innerHTML = ADMIN_PALETTES.map(p => {
+    const c = p.colors;
+    return `<div class="palette-item" data-palette="${p.id}" title="${p.name}" onclick="applyAdminPalette(ADMIN_PALETTES.find(x=>x.id==='${p.id}').colors)">
+      <div class="palette-swatches">
+        ${[c.admin_bg, c.admin_sidebar, c.admin_accent, c.admin_surface, c.admin_text].map(h => `<span style="background:${h}"></span>`).join('')}
+      </div>
+      <span class="palette-item-name">${p.name}</span>
+    </div>`;
+  }).join('');
+}
+
+function applyAdminColors(c) {
+  const root = document.querySelector('#dashboardView');
+  if (!root) return;
+  root.style.setProperty('--admin-bg', c.admin_bg || '#0a0a14');
+  root.style.setProperty('--admin-sidebar', c.admin_sidebar || '#141425');
+  root.style.setProperty('--admin-accent', c.admin_accent || '#6c5ce7');
+  root.style.setProperty('--admin-text', c.admin_text || '#e8e8f0');
+  root.style.setProperty('--admin-border', c.admin_border || '#2d2d44');
+  root.style.setProperty('--admin-surface', c.admin_surface || '#1a1a2e');
+  document.body.style.background = c.admin_bg || '#0a0a14';
+}
+
+async function loadAdminConfig() {
+  renderAdminPalettes();
+  try {
+    const c = await (await fetch('/api/config')).json();
+    if (!c.error) {
+      const adminKeys = ['admin_bg','admin_sidebar','admin_accent','admin_text','admin_border','admin_surface'];
+      const adminColors = {};
+      adminKeys.forEach(k => { if (c[k]) adminColors[k] = c[k]; });
+      Object.entries(adminColors).forEach(([key, value]) => {
+        const el = document.querySelector(`[name="${key}"]`);
+        if (el && el.type === 'color') el.value = value.substring(0, 7);
+      });
+      if (adminColors.admin_bg) applyAdminColors(adminColors);
+    }
+  } catch {}
+}
+
+$('saveAdminConfigBtn')?.addEventListener('click', async () => {
+  const form = $('adminConfigForm');
+  const data = {};
+  form.querySelectorAll('[name]').forEach(el => { data[el.name] = el.value; });
+  const res = await fetch('/api/config', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  const result = await res.json();
+  if (result.success) {
+    applyAdminColors(data);
     $('configSaved').classList.remove('hidden');
     setTimeout(() => $('configSaved').classList.add('hidden'), 3000);
   }
@@ -192,6 +419,239 @@ async function markRead(id) {
   loadContacts();
 }
 
+/* ── Clients ────────────────────────────────────────────── */
+async function loadClients() {
+  const data = await api('/clients');
+  if (data.error) return;
+  $('clientsBody').innerHTML = data.map(c =>
+    `<tr>
+      <td><strong>${c.client_number}</strong></td>
+      <td>${c.phone}</td>
+      <td>${c.name || '—'}</td>
+      <td>${c.address || '—'}</td>
+      <td>${c.email || '—'}</td>
+      <td>${c.notes ? c.notes.substring(0, 40) : '—'}</td>
+      <td>
+        <button class="btn btn-sm btn-edit" onclick="editClient(${c.id})">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteClient(${c.id})">Eliminar</button>
+      </td>
+    </tr>`
+  ).join('');
+}
+
+function openClientModal(client = null) {
+  $('clientModalTitle').textContent = client ? 'Editar cliente' : 'Nuevo cliente';
+  $('clientId').value = client ? client.id : '';
+  $('clientPhone').value = client ? client.phone : '';
+  $('clientPhone').readOnly = !!client;
+  $('clientName').value = client ? client.name : '';
+  $('clientAddress').value = client ? client.address : '';
+  $('clientEmail').value = client ? client.email : '';
+  $('clientNotes').value = client ? client.notes : '';
+  $('clientModal').classList.remove('hidden');
+}
+
+function closeClientModal() {
+  $('clientModal').classList.add('hidden');
+}
+
+$('addClientBtn').addEventListener('click', () => openClientModal());
+$('closeClientModal').addEventListener('click', closeClientModal);
+
+$('clientForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = $('clientId').value;
+  const data = {
+    phone: $('clientPhone').value.trim(),
+    name: $('clientName').value.trim(),
+    address: $('clientAddress').value.trim(),
+    email: $('clientEmail').value.trim(),
+    notes: $('clientNotes').value.trim(),
+  };
+  const res = id
+    ? await api(`/clients/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+    : await api('/clients', { method: 'POST', body: JSON.stringify(data) });
+  if (res.success || res.id) {
+    closeClientModal();
+    loadClients();
+    showToast(id ? 'Cliente actualizado' : 'Cliente creado');
+  } else {
+    showToast(res.error || 'Error al guardar');
+  }
+});
+
+async function editClient(id) {
+  const data = await api('/clients');
+  const client = data.find(c => c.id === id);
+  if (client) openClientModal(client);
+}
+
+async function deleteClient(id) {
+  if (!confirm('¿Eliminar este cliente?')) return;
+  const res = await api(`/clients/${id}`, { method: 'DELETE' });
+  if (res.success) { loadClients(); showToast('Cliente eliminado'); }
+}
+
+$('exportClientsBtn').addEventListener('click', async () => {
+  if (!TOKEN) return;
+  try {
+    const res = await fetch('/api/admin/clients/export', {
+      headers: { 'Authorization': `Bearer ${TOKEN}` }
+    });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'clientes.vcf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Contactos exportados');
+  } catch { showToast('Error al exportar'); }
+});
+
+/* ── Products ──────────────────────────────────────────────── */
+async function loadProducts() {
+  const data = await api('/products');
+  if (data.error) return;
+  $('productsBody').innerHTML = data.map(p =>
+    `<tr>
+      <td><strong>${p.name}</strong></td>
+      <td>$${p.price.toFixed(2)}</td>
+      <td>${p.stock}</td>
+      <td>${p.category || '—'}</td>
+      <td>${p.enabled ? '✓ Activo' : '✕ Inactivo'}</td>
+      <td>
+        <button class="btn btn-sm btn-edit" onclick="editProduct(${p.id})">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">Eliminar</button>
+      </td>
+    </tr>`
+  ).join('');
+}
+
+function openProductModal(product = null) {
+  $('productModalTitle').textContent = product ? 'Editar producto' : 'Nuevo producto';
+  $('productId').value = product ? product.id : '';
+  $('productName').value = product ? product.name : '';
+  $('productDescription').value = product ? product.description : '';
+  $('productPrice').value = product ? product.price : '';
+  $('productStock').value = product ? product.stock : '';
+  $('productCategory').value = product ? product.category : '';
+  $('productImage').value = product ? product.image_url : '';
+  $('productModal').classList.remove('hidden');
+}
+
+function closeProductModal() {
+  $('productModal').classList.add('hidden');
+}
+
+$('addProductBtn').addEventListener('click', () => openProductModal());
+$('closeProductModal').addEventListener('click', closeProductModal);
+
+$('productForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = $('productId').value;
+  const data = {
+    name: $('productName').value.trim(),
+    description: $('productDescription').value.trim(),
+    price: parseFloat($('productPrice').value) || 0,
+    stock: parseInt($('productStock').value) || 0,
+    category: $('productCategory').value.trim(),
+    image_url: $('productImage').value.trim(),
+    enabled: true,
+  };
+  const res = id
+    ? await api(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+    : await api('/products', { method: 'POST', body: JSON.stringify(data) });
+  if (res.success || res.id) {
+    closeProductModal();
+    loadProducts();
+    showToast(id ? 'Producto actualizado' : 'Producto creado');
+  } else {
+    showToast(res.error || 'Error al guardar');
+  }
+});
+
+async function editProduct(id) {
+  const data = await api('/products');
+  const product = data.find(p => p.id === id);
+  if (product) openProductModal(product);
+}
+
+async function deleteProduct(id) {
+  if (!confirm('¿Eliminar este producto?')) return;
+  const res = await api(`/products/${id}`, { method: 'DELETE' });
+  if (res.success) { loadProducts(); showToast('Producto eliminado'); }
+}
+
+/* ── Users ─────────────────────────────────────────────────── */
+async function loadUsers() {
+  const data = await api('/users');
+  if (data.error) return;
+  $('usersBody').innerHTML = data.map(u =>
+    `<tr>
+      <td><strong>${u.username}</strong></td>
+      <td><span class="role-badge role-${u.role}">${roleLabel(u.role)}</span></td>
+      <td>${new Date(u.created_at).toLocaleDateString()}</td>
+      <td>
+        <button class="btn btn-sm btn-edit" onclick="editUser(${u.id})">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">Eliminar</button>
+      </td>
+    </tr>`
+  ).join('');
+}
+
+function openUserModal(user = null) {
+  $('userModalTitle').textContent = user ? 'Editar usuario' : 'Nuevo usuario';
+  $('userId').value = user ? user.id : '';
+  $('userUsername').value = user ? user.username : '';
+  $('userPassword').value = '';
+  $('userPassword').required = !user;
+  $('userPassword').placeholder = user ? 'Dejar vacío para no cambiar' : '••••••';
+  $('userRole').value = user ? user.role : 'response';
+  $('userModal').classList.remove('hidden');
+}
+
+function closeUserModal() {
+  $('userModal').classList.add('hidden');
+}
+
+$('addUserBtn').addEventListener('click', () => openUserModal());
+$('closeUserModal').addEventListener('click', closeUserModal);
+
+$('userForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = $('userId').value;
+  const data = {
+    username: $('userUsername').value.trim(),
+    password: $('userPassword').value,
+    role: $('userRole').value,
+  };
+  const res = id
+    ? await api(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+    : await api('/users', { method: 'POST', body: JSON.stringify(data) });
+  if (res.success || res.id) {
+    closeUserModal();
+    loadUsers();
+    showToast(id ? 'Usuario actualizado' : 'Usuario creado');
+  } else {
+    showToast(res.error || 'Error al guardar');
+  }
+});
+
+async function editUser(id) {
+  const data = await api('/users');
+  const user = data.find(u => u.id === id);
+  if (user) openUserModal(user);
+}
+
+async function deleteUser(id) {
+  if (!confirm('¿Eliminar este usuario?')) return;
+  const res = await api(`/users/${id}`, { method: 'DELETE' });
+  if (res.success) { loadUsers(); showToast('Usuario eliminado'); }
+}
+
 /* ── WhatsApp ────────────────────────────────────────────── */
 async function loadWhatsApp() {
   const status = await api('/whatsapp-status');
@@ -202,6 +662,8 @@ async function loadWhatsApp() {
                    status.status === 'disconnected' ? '❌ Desconectado' :
                    '⚠ Error';
 
+  $('waStopBtn').style.display = status.status === 'connected' || status.status === 'qr_ready' ? 'inline-block' : 'none';
+
   if (status.qrCode) {
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(status.qrCode)}&size=260x260`;
     $('whatsappQr').innerHTML = `<img src="${qrImg}" alt="QR Code">`;
@@ -211,6 +673,12 @@ async function loadWhatsApp() {
 
   loadConversations();
 }
+
+$('waStopBtn').addEventListener('click', async () => {
+  if (!confirm('¿Detener WhatsApp?')) return;
+  await api('/whatsapp-stop', { method: 'POST' });
+  loadWhatsApp();
+});
 
 async function loadConversations() {
   const convs = await api('/whatsapp-conversations');
@@ -226,16 +694,18 @@ async function loadConversations() {
     badge.style.display = totalUnread ? 'inline-flex' : 'none';
   }
 
-  $('waConvList').innerHTML = convs.map(c => `
+  $('waConvList').innerHTML = convs.map(c => {
+    const cname = c.client_name && c.client_name !== c.number ? `${c.client_name} (${c.client_number})` : c.number;
+    return `
     <div class="wa-conv-item ${c.unread > 0 ? 'unread' : ''}" onclick="openConversation('${c.number}')">
       <div class="wa-conv-top">
-        <span class="wa-conv-number">${c.number}</span>
+        <span class="wa-conv-number">${cname}</span>
         ${c.unread > 0 ? `<span class="wa-conv-unread">${c.unread}</span>` : ''}
       </div>
       <div class="wa-conv-preview">${c.last_message || ''}</div>
       <div class="wa-conv-date">${c.last_date ? new Date(c.last_date).toLocaleString() : ''}</div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 let currentConv = null;
@@ -246,8 +716,10 @@ async function openConversation(number) {
   if (!msgs || msgs.error) return;
 
   const unread = msgs.filter(m => !m.is_read).length;
+  const client = await api(`/clients/by-phone/${encodeURIComponent(number)}`);
+  const displayName = client && client.name && client.name !== number ? `${client.name} (${client.client_number})` : number;
   $('waMainHeader').innerHTML = `
-    <span>${number} ${unread > 0 ? `<span class="wa-conv-unread" style="margin-left:8px">${unread} nuevos</span>` : ''}</span>
+    <span>${displayName} ${unread > 0 ? `<span class="wa-conv-unread" style="margin-left:8px">${unread} nuevos</span>` : ''}</span>
     <div class="wa-actions">
       <button class="wa-btn read" onclick="markRead('${number}')">✓ Leído</button>
       <button class="wa-btn unread" onclick="markUnread('${number}')">✗ No leído</button>
@@ -259,10 +731,40 @@ async function openConversation(number) {
       ${m.response || m.message}
       <div class="wa-msg-time">${new Date(m.created_at).toLocaleString()} ${m.is_read ? '✓' : ''}</div>
     </div>
-  `).join('');
+  `).join('') + `
+    <div class="wa-send-bar" id="waSendBar">
+      <input type="text" id="waSendInput" class="wa-send-input" placeholder="Escribí un mensaje..." data-number="${number}">
+      <button class="wa-btn-send" id="waSendBtn">Enviar</button>
+    </div>
+  `;
 
   $('waMessages').scrollTop = $('waMessages').scrollHeight;
 }
+
+document.addEventListener('click', async e => {
+  if (e.target.id === 'waSendBtn') {
+    const input = $('waSendInput');
+    const number = input?.dataset.number;
+    const text = input?.value.trim();
+    if (!number || !text) return;
+    input.disabled = true;
+    const res = await api('/whatsapp-send', { method: 'POST', body: JSON.stringify({ number, message: text }) });
+    input.disabled = false;
+    if (res.success) {
+      input.value = '';
+      openConversation(number);
+      showToast('Mensaje enviado');
+    } else {
+      showToast(res.error || 'Error al enviar');
+    }
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'waSendInput') {
+    document.getElementById('waSendBtn')?.click();
+  }
+});
 
 async function markRead(number) {
   await api(`/whatsapp-conversation/${encodeURIComponent(number)}/read`, { method: 'PUT' });
@@ -307,7 +809,7 @@ function showToast(msg) {
       if (data.valid) {
         TOKEN = saved;
         USER = data.user;
-        $('userBadge').textContent = `${data.user.username} (${data.user.role})`;
+        $('userBadge').textContent = `${data.user.username} (${roleLabel(data.user.role)})`;
         showView('dashboardView');
         loadDashboard();
         return;

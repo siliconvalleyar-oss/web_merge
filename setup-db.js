@@ -44,11 +44,36 @@ db.exec(`
     created_at  TEXT DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS clients (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_number TEXT UNIQUE NOT NULL,
+    phone         TEXT UNIQUE NOT NULL,
+    name          TEXT DEFAULT '',
+    address       TEXT DEFAULT '',
+    email         TEXT DEFAULT '',
+    notes         TEXT DEFAULT '',
+    created_at    TEXT DEFAULT (datetime('now')),
+    updated_at    TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS products (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    price       REAL DEFAULT 0,
+    stock       INTEGER DEFAULT 0,
+    category    TEXT DEFAULT '',
+    image_url   TEXT DEFAULT '',
+    enabled     INTEGER DEFAULT 1,
+    created_at  TEXT DEFAULT (datetime('now')),
+    updated_at  TEXT DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS users (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     username      TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    role          TEXT NOT NULL DEFAULT 'editor' CHECK(role IN ('admin','editor')),
+    role          TEXT NOT NULL DEFAULT 'response' CHECK(role IN ('master','stock','response')),
     created_at    TEXT DEFAULT (datetime('now'))
   );
 `);
@@ -72,6 +97,12 @@ const configDefaults = [
   ['chatbot_name',    'WebBot'],
   ['chatbot_greeting','Hola, soy WebBot. ¿En qué puedo ayudarte?'],
   ['faq_categories',  'general,tecnico,proceso,soporte'],
+  ['admin_bg',        '#0a0a14'],
+  ['admin_sidebar',   '#141425'],
+  ['admin_accent',    '#6c5ce7'],
+  ['admin_text',      '#e8e8f0'],
+  ['admin_border',    '#2d2d44'],
+  ['admin_surface',   '#1a1a2e'],
 ];
 const insertMany = db.transaction(() => {
   for (const [k, v] of configDefaults) insertConfig.run(k, v);
@@ -115,7 +146,13 @@ insertFaqs();
 const hash = bcrypt.hashSync('admin123', 10);
 db.prepare(
   'INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)'
-).run('admin', hash, 'admin');
+).run('master', hash, 'master');
+db.prepare(
+  'INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)'
+).run('stock', hash, 'stock');
+db.prepare(
+  'INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)'
+).run('response', hash, 'response');
 
 db.close();
 console.log('✅ Base de datos inicializada: data/webmerge.db');

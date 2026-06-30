@@ -35,12 +35,30 @@ function findChrome() {
 function getMenuResponse(option) {
   const opt = option.replace(/[^0-9]/g, '');
   switch (opt) {
-    case '1':
-      return '📋 *Catálogo*\n\nPodés ver nuestros productos en:\nhttps://electronica-store.example.com/catalogo\n\nO envianos "comprar" para mas opciones.';
+    case '1': {
+      const products = db.prepare("SELECT name, price, stock FROM products WHERE enabled = 1 ORDER BY name ASC").all();
+      if (products.length === 0) return '📋 *Catálogo*\n\nNo hay productos disponibles en este momento.';
+      let msg = '📋 *Catálogo de productos*\n\n';
+      products.forEach((p, i) => {
+        msg += `${i + 1}. *${p.name}*`;
+        if (p.price > 0) msg += ` — $${p.price.toFixed(2)}`;
+        msg += `\n   Stock: ${p.stock > 0 ? '✅ Disponible' : '❌ Sin stock'}\n`;
+      });
+      msg += '\nRespondé con el nombre del producto para más info o escribí *menu* para volver.';
+      return msg;
+    }
     case '2':
       return '🛒 *Comprar*\n\nPara realizar una compra:\n1. Elegí el producto del catálogo\n2. Consultá disponibilidad\n3. Coordinamos entrega\n\nEscribí el nombre del producto que buscas.';
-    case '3':
-      return '💰 *Consultar precio*\n\nDecime qué producto te interesa y te paso el precio actualizado.';
+    case '3': {
+      const products = db.prepare("SELECT name, price, stock FROM products WHERE enabled = 1 ORDER BY name ASC").all();
+      if (products.length === 0) return '💰 *Precios*\n\nNo hay productos disponibles en este momento.';
+      let msg = '💰 *Lista de precios*\n\n';
+      products.forEach(p => {
+        msg += `• *${p.name}*: $${p.price.toFixed(2)} — ${p.stock > 0 ? '✅' : '❌ Sin stock'}\n`;
+      });
+      msg += '\nRespondé con el nombre del producto que te interese.';
+      return msg;
+    }
     case '4':
       return '👤 *Hablar con un asesor*\n\nDejanos tu consulta y en breve te responderemos.';
     case '5':
@@ -123,6 +141,15 @@ Mientras tanto, escribí *menu* para ver las opciones disponibles.`;
         /* si falla marcar como no leido, no es critico */
       }
 
+      const existing = db.prepare('SELECT id FROM clients WHERE phone = ?').get(userNumber);
+      if (!existing) {
+        const count = db.prepare('SELECT COUNT(*) as c FROM clients').get().c;
+        const client_number = `CLI-${String(count + 1).padStart(3, '0')}`;
+        db.prepare(
+          'INSERT OR IGNORE INTO clients (client_number, phone, name) VALUES (?, ?, ?)'
+        ).run(client_number, userNumber, userNumber);
+      }
+
       db.prepare(
         'INSERT INTO whatsapp_messages (number, message, response) VALUES (?, ?, ?)'
       ).run(userNumber, userQuery, response);
@@ -164,14 +191,17 @@ function getMessages(limit = 50) {
 function getConversations() {
   try {
     return db.prepare(`
-      SELECT number, 
+      SELECT w.number, 
              COUNT(*) as total,
-             SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unread,
-             MAX(created_at) as last_date,
+             SUM(CASE WHEN w.is_read = 0 THEN 1 ELSE 0 END) as unread,
+             MAX(w.created_at) as last_date,
              (SELECT message FROM whatsapp_messages WHERE number = w.number ORDER BY created_at DESC LIMIT 1) as last_message,
-             (SELECT response FROM whatsapp_messages WHERE number = w.number ORDER BY created_at DESC LIMIT 1) as last_response
+             (SELECT response FROM whatsapp_messages WHERE number = w.number ORDER BY created_at DESC LIMIT 1) as last_response,
+             COALESCE(c.name, '') as client_name,
+             COALESCE(c.client_number, '') as client_number
       FROM whatsapp_messages w
-      GROUP BY number
+      LEFT JOIN clients c ON c.phone = w.number
+      GROUP BY w.number
       ORDER BY last_date DESC
     `).all();
   } catch (err) {
@@ -205,4 +235,27 @@ function markConversationUnread(number) {
   } catch { return false; }
 }
 
-module.exports = { initWhatsApp, getStatus, getMessages, getConversations, getConversationMessages, markConversationRead, markConversationUnread };
+async function sendMessage(number, text) {
+  if (!client) throw new Error('WhatsApp no conectado');
+  const chatId = number.includes('@c.us') ? number : `${number}@c.us`;
+  try {
+    const chat = await client.getChatById(chatId);
+    await chat.sendMessage(text);
+    db.prepare('INSERT INTO whatsapp_messages (number, message, response) VALUES (?, ?, ?)').run(number, '', text);
+  } catch (e) {
+    await client.sendMessage(chatId, text);
+    db.prepare('INSERT INTO whatsapp_messages (number, message, response) VALUES (?, ?, ?)').run(number, '', text);
+  }
+}
+
+async function stopWhatsApp() {
+  if (client) {
+    try { await client.destroy(); } catch {}
+    client = null;
+  }
+  status = 'disconnected';
+  qrCode = null;
+  console.log('🛑 WhatsApp detenido');
+}
+
+module.exports = { initWhatsApp, stopWhatsApp, getStatus, getMessages, getConversations, getConversationMessages, markConversationRead, markConversationUnread, sendMessage };

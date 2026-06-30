@@ -44,14 +44,18 @@
         </div>
       </header>
 
-      <nav class="admin-tabs">
-        <button class="tab active" data-tab="faqs">FAQs</button>
-        <button class="tab" data-tab="config">Config</button>
-        <button class="tab" data-tab="contacts">Contactos <span class="badge-msg" style="display:none"></span></button>
-        <button class="tab" data-tab="whatsapp">WhatsApp <span class="badge-msg" style="display:none"></span></button>
-      </nav>
+      <div class="admin-layout">
+        <nav class="admin-sidebar">
+          <button class="tab active" data-tab="faqs">FAQs</button>
+          <button class="tab" data-tab="config">Config</button>
+          <button class="tab" data-tab="contacts">Contactos <span class="badge-msg" style="display:none"></span></button>
+          <button class="tab" data-tab="clients">Clientes</button>
+          <button class="tab" data-tab="products">Productos</button>
+          <button class="tab" data-tab="users">Usuarios</button>
+          <button class="tab" data-tab="whatsapp">WhatsApp <span class="badge-msg" style="display:none"></span></button>
+        </nav>
 
-      <main class="admin-content">
+        <main class="admin-content">
         <!-- FAQs Tab -->
         <section id="tabFaqs" class="tab-content active">
           <div class="tab-header">
@@ -71,41 +75,87 @@
         <!-- Config Tab -->
         <section id="tabConfig" class="tab-content">
           <div class="tab-header"><h3>Configuración de colores</h3></div>
-          <form id="configForm" class="config-grid">
-            <div class="form-group">
-              <label>Color primario</label>
-              <input type="color" name="primary_color" class="color-picker">
+
+          <div style="margin-bottom:28px">
+            <div class="palette-section">
+              <label class="palette-label">🎨 Paletas — Sitio web</label>
+              <div class="palette-grid" id="paletteGrid"></div>
             </div>
-            <div class="form-group">
-              <label>Color secundario</label>
-              <input type="color" name="secondary_color" class="color-picker">
+
+            <form id="configForm" class="config-grid">
+              <div class="form-group">
+                <label>Color primario</label>
+                <input type="color" name="primary_color" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Color secundario</label>
+                <input type="color" name="secondary_color" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Color de acento</label>
+                <input type="color" name="accent_color" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Color de fondo</label>
+                <input type="color" name="bg_color" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Color de superficie</label>
+                <input type="color" name="surface_color" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Color de texto</label>
+                <input type="color" name="text_color" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Nombre del sitio</label>
+                <input type="text" name="site_name" class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Nombre del chatbot</label>
+                <input type="text" name="chatbot_name" class="form-input">
+              </div>
+            </form>
+          </div>
+
+          <div style="margin-bottom:28px;padding-top:20px;border-top:1px solid #2d2d44">
+            <div class="palette-section">
+              <label class="palette-label">🎨 Paletas — Panel Admin</label>
+              <div class="palette-grid" id="adminPaletteGrid"></div>
             </div>
-            <div class="form-group">
-              <label>Color de acento</label>
-              <input type="color" name="accent_color" class="color-picker">
-            </div>
-            <div class="form-group">
-              <label>Color de fondo</label>
-              <input type="color" name="bg_color" class="color-picker">
-            </div>
-            <div class="form-group">
-              <label>Color de superficie</label>
-              <input type="color" name="surface_color" class="color-picker">
-            </div>
-            <div class="form-group">
-              <label>Color de texto</label>
-              <input type="color" name="text_color" class="color-picker">
-            </div>
-            <div class="form-group">
-              <label>Nombre del sitio</label>
-              <input type="text" name="site_name" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>Nombre del chatbot</label>
-              <input type="text" name="chatbot_name" class="form-input">
-            </div>
-          </form>
-          <button id="saveConfigBtn" class="btn btn-primary">Guardar configuración</button>
+
+            <form id="adminConfigForm" class="config-grid">
+              <div class="form-group">
+                <label>Fondo del admin</label>
+                <input type="color" name="admin_bg" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Sidebar</label>
+                <input type="color" name="admin_sidebar" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Acento admin</label>
+                <input type="color" name="admin_accent" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Texto admin</label>
+                <input type="color" name="admin_text" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Bordes admin</label>
+                <input type="color" name="admin_border" class="color-picker">
+              </div>
+              <div class="form-group">
+                <label>Superficie admin</label>
+                <input type="color" name="admin_surface" class="color-picker">
+              </div>
+            </form>
+          </div>
+
+          <div style="display:flex;gap:8px">
+            <button id="saveConfigBtn" class="btn btn-primary">Guardar configuración</button>
+            <button id="saveAdminConfigBtn" class="btn btn-primary">Guardar colores admin</button>
+          </div>
           <div id="configSaved" class="toast-info hidden">Configuración guardada</div>
         </section>
 
@@ -120,9 +170,63 @@
           </div>
         </section>
 
+        <!-- Clientes Tab -->
+        <section id="tabClients" class="tab-content">
+          <div class="tab-header">
+            <h3>Clientes</h3>
+            <div style="display:flex;gap:8px">
+              <button id="exportClientsBtn" class="btn btn-sm">📇 Exportar contactos</button>
+              <button id="addClientBtn" class="btn btn-primary btn-sm">+ Nuevo cliente</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="clientsTable">
+              <thead><tr>
+                <th>N.º Cliente</th><th>Teléfono</th><th>Nombre</th><th>Dirección</th><th>Email</th><th>Notas</th><th>Acciones</th>
+              </tr></thead>
+              <tbody id="clientsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Products Tab -->
+        <section id="tabProducts" class="tab-content">
+          <div class="tab-header">
+            <h3>Productos</h3>
+            <button id="addProductBtn" class="btn btn-primary btn-sm">+ Nuevo producto</button>
+          </div>
+          <div class="table-wrap">
+            <table id="productsTable">
+              <thead><tr>
+                <th>Nombre</th><th>Precio</th><th>Stock</th><th>Categoría</th><th>Estado</th><th>Acciones</th>
+              </tr></thead>
+              <tbody id="productsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Users Tab -->
+        <section id="tabUsers" class="tab-content">
+          <div class="tab-header">
+            <h3>Usuarios</h3>
+            <button id="addUserBtn" class="btn btn-primary btn-sm">+ Nuevo usuario</button>
+          </div>
+          <div class="table-wrap">
+            <table id="usersTable">
+              <thead><tr>
+                <th>Usuario</th><th>Rol</th><th>Creado</th><th>Acciones</th>
+              </tr></thead>
+              <tbody id="usersBody"></tbody>
+            </table>
+          </div>
+        </section>
+
         <!-- WhatsApp Tab -->
         <section id="tabWhatsapp" class="tab-content">
-          <div class="tab-header"><h3>WhatsApp Bot</h3></div>
+          <div class="tab-header">
+            <h3>WhatsApp Bot</h3>
+            <button id="waStopBtn" class="btn btn-sm btn-danger" style="display:none;">⏹ Detener</button>
+          </div>
           <div id="whatsappStatus" class="whatsapp-status"></div>
           <div id="whatsappQr" class="whatsapp-qr"></div><div id="whatsappLayout" class="wa-layout">
             <div class="wa-sidebar" id="waSidebar">
@@ -142,7 +246,110 @@
             </div>
           </div>
         </section>
-      </main>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <div id="clientModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="clientModalTitle">Nuevo cliente</h3>
+        <button id="closeClientModal" class="modal-close">✕</button>
+      </div>
+      <form id="clientForm" class="modal-form">
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="text" id="clientPhone" class="form-input" placeholder="+5491122334455" required>
+        </div>
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="clientName" class="form-input" placeholder="Nombre del cliente">
+        </div>
+        <div class="form-group">
+          <label>Dirección</label>
+          <input type="text" id="clientAddress" class="form-input" placeholder="Calle y número, ciudad">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="clientEmail" class="form-input" placeholder="cliente@email.com">
+        </div>
+        <div class="form-group">
+          <label>Notas</label>
+          <textarea id="clientNotes" class="form-input" rows="3" placeholder="Notas adicionales"></textarea>
+        </div>
+        <input type="hidden" id="clientId" value="">
+        <button type="submit" class="btn btn-primary btn-full">Guardar cliente</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="productModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="productModalTitle">Nuevo producto</h3>
+        <button id="closeProductModal" class="modal-close">✕</button>
+      </div>
+      <form id="productForm" class="modal-form">
+        <div class="form-group">
+          <label>Nombre *</label>
+          <input type="text" id="productName" class="form-input" placeholder="Nombre del producto" required>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea id="productDescription" class="form-input" rows="3" placeholder="Descripción del producto"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Precio ($)</label>
+          <input type="number" id="productPrice" class="form-input" step="0.01" min="0" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Stock (cantidad)</label>
+          <input type="number" id="productStock" class="form-input" min="0" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Categoría</label>
+          <input type="text" id="productCategory" class="form-input" placeholder="ej: Electrónica, Hogar">
+        </div>
+        <div class="form-group">
+          <label>URL de imagen (opcional)</label>
+          <input type="url" id="productImage" class="form-input" placeholder="https://ejemplo.com/imagen.jpg">
+        </div>
+        <input type="hidden" id="productId" value="">
+        <button type="submit" class="btn btn-primary btn-full">Guardar producto</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="userModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="userModalTitle">Nuevo usuario</h3>
+        <button id="closeUserModal" class="modal-close">✕</button>
+      </div>
+      <form id="userForm" class="modal-form">
+        <div class="form-group">
+          <label>Usuario *</label>
+          <input type="text" id="userUsername" class="form-input" placeholder="Nombre de usuario" required>
+        </div>
+        <div class="form-group">
+          <label>Contraseña *</label>
+          <input type="password" id="userPassword" class="form-input" placeholder="••••••" required>
+        </div>
+        <div class="form-group">
+          <label>Rol *</label>
+          <select id="userRole" class="form-input">
+            <option value="master">Master — acceso completo</option>
+            <option value="stock">Stock — gestionar productos</option>
+            <option value="response" selected>Respuesta — responder canales</option>
+          </select>
+        </div>
+        <input type="hidden" id="userId" value="">
+        <button type="submit" class="btn btn-primary btn-full">Guardar usuario</button>
+      </form>
     </div>
   </div>
 
