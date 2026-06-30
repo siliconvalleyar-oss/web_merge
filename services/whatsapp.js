@@ -10,16 +10,38 @@ let status = 'disconnected';
 
 const MENU = `👋 *Hola! Soy el contestador automático de Leo*
 
-Elegí una opción:
+Elegí una opción con la *letra* correspondiente:
 
-1️⃣ *Catálogo de productos*
-2️⃣ *Comprar*
-3️⃣ *Consultar precio*
-4️⃣ *Hablar con un asesor*
-5️⃣ *Sucursales*
-0️⃣ *Menu principal*
+*A* ─ Servicios
+*B* ─ Productos
+*C* ─ Tienda
+*D* ─ Link de compra
+*E* ─ Más productos
+*F* ─ Hablar con un asesor
 
-Respondé con el número de la opción que te interese.`;
+Respondé con la *letra* de la opción que te interese.`;
+
+const SUB_SERVICIOS = `🔧 *Servicios*
+
+*AA* ─ Desarrollo web
+*AB* ─ Diseño gráfico
+*AC* ─ Marketing digital
+*AD* ─ Soporte técnico
+*AE* ─ Consultoría
+*AF* ─ Volver al menú principal
+
+Respondé con las *dos letras* de la opción (ej: AA).`;
+
+const SUB_TIENDA = `🏪 *Tienda*
+
+*CA* ─ Horarios de atención
+*CB* ─ Ubicación
+*CC* ─ Contacto directo
+*CD* ─ Formas de pago
+*CE* ─ Envíos
+*CF* ─ Volver al menú principal
+
+Respondé con las *dos letras* de la opción (ej: CA).`;
 
 function findChrome() {
   const candidates = [
@@ -35,39 +57,96 @@ function findChrome() {
 }
 
 function getMenuResponse(option) {
-  const opt = option.replace(/[^0-9]/g, '');
-  switch (opt) {
-    case '1': {
-      const products = db.prepare("SELECT name, price, stock FROM products WHERE enabled = 1 ORDER BY name ASC").all();
-      if (products.length === 0) return '📋 *Catálogo*\n\nNo hay productos disponibles en este momento.';
-      let msg = '📋 *Catálogo de productos*\n\n';
-      products.forEach((p, i) => {
-        msg += `${i + 1}. *${p.name}*`;
-        if (p.price > 0) msg += ` — $${p.price.toFixed(2)}`;
-        msg += `\n   Stock: ${p.stock > 0 ? '✅ Disponible' : '❌ Sin stock'}\n`;
-      });
-      msg += '\nRespondé con el nombre del producto para más info o escribí *menu* para volver.';
-      return msg;
-    }
-    case '2':
-      return '🛒 *Comprar*\n\nPara realizar una compra:\n1. Elegí el producto del catálogo\n2. Consultá disponibilidad\n3. Coordinamos entrega\n\nEscribí el nombre del producto que buscas.';
-    case '3': {
-      const products = db.prepare("SELECT name, price, stock FROM products WHERE enabled = 1 ORDER BY name ASC").all();
-      if (products.length === 0) return '💰 *Precios*\n\nNo hay productos disponibles en este momento.';
-      let msg = '💰 *Lista de precios*\n\n';
-      products.forEach(p => {
-        msg += `• *${p.name}*: $${p.price.toFixed(2)} — ${p.stock > 0 ? '✅' : '❌ Sin stock'}\n`;
-      });
-      msg += '\nRespondé con el nombre del producto que te interese.';
-      return msg;
-    }
-    case '4':
-      return '👤 *Hablar con un asesor*\n\nDejanos tu consulta y en breve te responderemos.';
-    case '5':
-      return '📍 *Sucursales*\n\nAv. Siempre Viva 123, Centro\nLun a Vie 9:00-18:00\nSáb 9:00-13:00';
-    default:
-      return MENU;
+  const opt = option.trim().toLowerCase();
+
+  // ── Main menu letters ──
+  if (opt === 'a') return SUB_SERVICIOS;
+  if (opt === 'b') {
+    const products = db.prepare("SELECT name, price, stock, category FROM products WHERE enabled = 1 ORDER BY category, name ASC").all();
+    if (products.length === 0) return '📋 *Productos*\n\nNo hay productos disponibles en este momento.';
+    let msg = '📋 *Productos disponibles*\n\n';
+    let lastCat = '';
+    products.forEach((p, i) => {
+      if (p.category && p.category !== lastCat) {
+        msg += `\n▸ *${p.category}*\n`;
+        lastCat = p.category;
+      }
+      const letra = String.fromCharCode(97 + i);
+      msg += `${letra}) ${p.name} — $${p.price.toFixed(2)} ${p.stock > 0 ? '✅' : '❌'}\n`;
+    });
+    msg += '\nRespondé con la *letra* del producto para más detalles.';
+    msg += '\nO escribí *menu* para volver.';
+    return msg;
   }
+  if (opt === 'c') return SUB_TIENDA;
+  if (opt === 'd') {
+    return `🛒 *Link de compra*
+
+👉 *Tienda online:*\nhttps://webmerge.studio/tienda
+
+📍 También podés visitarnos en:\nAv. Siempre Viva 123, Centro
+
+Escribí *menu* para volver al inicio.`;
+  }
+  if (opt === 'e') {
+    const products = db.prepare("SELECT name, price, stock FROM products WHERE enabled = 1 ORDER BY name ASC LIMIT 20").all();
+    if (products.length === 0) return '📦 *Más productos*\n\nNo hay más productos disponibles.';
+    let msg = '📦 *Más productos*\n\n';
+    products.forEach((p, i) => {
+      const letra = String.fromCharCode(97 + i);
+      msg += `${letra}) *${p.name}* — $${p.price.toFixed(2)}\n`;
+      msg += `   Stock: ${p.stock > 0 ? '✅' : '❌'}\n`;
+    });
+    msg += '\nRespondé con la *letra* del producto para más info.';
+    msg += '\nO escribí *menu* para volver.';
+    return msg;
+  }
+  if (opt === 'f') {
+    return `👤 *Hablar con un asesor*
+
+Dejanos tu consulta y en breve te responderemos.
+
+Escribí *menu* para volver al inicio.`;
+  }
+
+  // ── Submenu: Servicios (a → letra) ──
+  if (opt === 'aa' || opt === 'a.a' || opt === 'a 1') return '💻 *Desarrollo web*\n\nCreamos sitios web profesionales, tiendas online y aplicaciones web a medida.\n\nTecnologías: HTML, CSS, JavaScript, Node.js, React.\n\nEscribí *menu* para volver.';
+  if (opt === 'ab' || opt === 'a.b' || opt === 'a 2') return '🎨 *Diseño gráfico*\n\nDiseñamos tu marca, logo, redes sociales y material publicitario.\n\nIncluye: identidad visual, branding, flyers.\n\nEscribí *menu* para volver.';
+  if (opt === 'ac' || opt === 'a.c' || opt === 'a 3') return '📱 *Marketing digital*\n\nGestionamos redes sociales, campañas de publicidad y SEO para tu negocio.\n\nEscribí *menu* para volver.';
+  if (opt === 'ad' || opt === 'a.d' || opt === 'a 4') return '🔧 *Soporte técnico*\n\nSoporte técnico informático, mantenimiento de sistemas y consultoría IT.\n\nEscribí *menu* para volver.';
+  if (opt === 'ae' || opt === 'a.e' || opt === 'a 5') return '💡 *Consultoría*\n\nAsesoramiento personalizado para tu proyecto digital.\n\nEscribí *menu* para volver.';
+  if (opt === 'af' || opt === 'a.f') return MENU;
+
+  // ── Submenu: Tienda (c → letra) ──
+  if (opt === 'ca' || opt === 'c.a' || opt === 'c 1') return '🕐 *Horarios*\n\nLunes a Viernes: 9:00 a 18:00\nSábados: 9:00 a 13:00\nDomingos: Cerrado\n\nEscribí *menu* para volver.';
+  if (opt === 'cb' || opt === 'c.b' || opt === 'c 2') return '📍 *Ubicación*\n\nAv. Siempre Viva 123, Centro\n\n📌 Ver en Google Maps\n\nEscribí *menu* para volver.';
+  if (opt === 'cc' || opt === 'c.c' || opt === 'c 3') return '📞 *Contacto*\n\nTeléfono: +54 11 5555-1234\nEmail: contacto@webmerge.studio\n\nEscribí *menu* para volver.';
+  if (opt === 'cd' || opt === 'c.d' || opt === 'c 4') return '💳 *Formas de pago*\n\n• Efectivo\n• Transferencia bancaria\n• Mercado Pago\n• Tarjetas de crédito/débito\n\nEscribí *menu* para volver.';
+  if (opt === 'ce' || opt === 'c.e' || opt === 'c 5') return '🚚 *Envíos*\n\n• Envío gratis en compras mayores a $5000\n• Entrega en 24/48 hs hábiles\n• Retiro en tienda sin cargo\n\nEscribí *menu* para volver.';
+  if (opt === 'cf' || opt === 'c.f') return MENU;
+
+  // ── Product detail by letter (from B or E sub-lists) ──
+  if (/^[a-z]$/.test(opt)) {
+    const idx = opt.charCodeAt(0) - 97;
+    const products = db.prepare("SELECT * FROM products WHERE enabled = 1 ORDER BY category, name ASC").all();
+    const p = products[idx];
+    if (p) {
+      return `📦 *${p.name}*
+
+${p.description || 'Sin descripción'}
+
+💰 *Precio:* $${p.price.toFixed(2)}
+📦 *Stock:* ${p.stock > 0 ? '✅ Disponible (' + p.stock + ' uds.)' : '❌ Sin stock'}
+${p.category ? '🏷️ *Categoría:* ' + p.category : ''}
+
+Escribí *menu* para volver al inicio.`;
+    }
+  }
+
+  // ── Fallback ──
+  return `🤖 No entendí tu opción.
+
+Escribí *menu* para ver las opciones disponibles.`;
 }
 
 async function initWhatsApp() {
@@ -136,7 +215,7 @@ async function initWhatsApp() {
       }
 
       let response;
-      if (/^[0-9]+$/.test(userQuery)) {
+      if (/^[0-9]+$/.test(userQuery) || /^[a-z]([. ][a-z0-9])?$/.test(userQuery)) {
         response = getMenuResponse(userQuery);
       } else if (userQuery === 'menu' || userQuery === 'hola' || userQuery === 'buenas' || userQuery.includes('menu')) {
         response = MENU;
