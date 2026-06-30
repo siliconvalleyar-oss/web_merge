@@ -24,6 +24,7 @@ function buildMenu(parentKey) {
     msg += `\n*${trigger}* ${icon ? icon + ' ' : ''}─ ${item.label}`;
   });
   msg += '\n\nRespondé con el *código* de la opción que te interese.';
+  if (parentKey) msg += '\nO escribí *0* para volver al menú principal.';
 
   // Get parent's label for a nicer title
   let title = 'Menú';
@@ -81,7 +82,7 @@ function getMenuResponse(option) {
         const letra = String.fromCharCode(97 + i);
         msg += `${letra}) ${p.name} — $${p.price.toFixed(2)} ${p.stock > 0 ? '✅' : '❌'}\n`;
       });
-      msg += '\nRespondé con la *letra* del producto para más detalles.\nO escribí *menu* para volver.';
+      msg += '\nRespondé con la *letra* del producto para más detalles.\nO escribí *0* o *menu* para volver.';
       return msg;
     }
     case 'back':
@@ -182,7 +183,9 @@ async function initWhatsApp() {
       }
 
       let response;
-      if (/^[0-9]+$/.test(userQuery) || /^[a-z]([. ][a-z0-9])?$/.test(userQuery)) {
+      if (userQuery === '0' || userQuery === 'volver' || userQuery === 'atras' || userQuery === 'back') {
+        response = buildMenu('');
+      } else if (/^[0-9]+$/.test(userQuery) || /^[a-z]([. ][a-z0-9])?$/.test(userQuery)) {
         response = getMenuResponse(userQuery);
       } else if (userQuery === 'menu' || userQuery === 'hola' || userQuery === 'buenas' || userQuery.includes('menu')) {
         response = buildMenu('');
