@@ -68,9 +68,10 @@ const UI = {
       }
       const data = { name: '', email: '', message: '' };
       fields.forEach(f => {
-        if (f.name === 'name') data.name = f.value;
-        if (f.name === 'email') data.email = f.value;
-        if (f.name === 'message') data.message = f.value;
+        const key = f.name || f.id;
+        if (key === 'name') data.name = f.value;
+        if (key === 'email') data.email = f.value;
+        if (key === 'message') data.message = f.value;
       });
       console.log('📤 Enviando formulario:', data);
       try {
