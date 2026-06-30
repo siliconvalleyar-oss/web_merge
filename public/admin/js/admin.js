@@ -675,6 +675,7 @@ async function loadWhatsApp() {
 
   $('waStopBtn').style.display = status.status === 'connected' || status.status === 'qr_ready' ? 'inline-block' : 'none';
   $('waStartBtn').style.display = status.status === 'disconnected' || status.status === 'error' ? 'inline-block' : 'none';
+  $('waResetBtn').style.display = status.status === 'connected' || status.status === 'disconnected' || status.status === 'qr_ready' || status.status === 'error' ? 'inline-block' : 'none';
 
   if (status.qrCode) {
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(status.qrCode)}&size=260x260`;
@@ -697,6 +698,23 @@ $('waStartBtn').addEventListener('click', async () => {
   $('waStartBtn').textContent = '⏳ Conectando...';
   await api('/whatsapp-start', { method: 'POST' });
   setTimeout(loadWhatsApp, 2000);
+});
+
+$('waResetBtn').addEventListener('click', async () => {
+  if (!confirm('¿Eliminar la sesión de WhatsApp?\n\nEsto borrará la sesión actual y te permitirá escanear un nuevo QR con otro número de teléfono.')) return;
+  if (!confirm('⚠️ ¿Estás seguro? Se perderá el acceso al número actual.')) return;
+  $('waResetBtn').disabled = true;
+  $('waResetBtn').textContent = '⏳ Borrando sesión...';
+  const res = await api('/whatsapp-reset', { method: 'POST' });
+  $('waResetBtn').disabled = false;
+  $('waResetBtn').textContent = '🔄 Cambiar cuenta';
+  if (res.success) {
+    $('whatsappQr').innerHTML = '';
+    $('waConvList').innerHTML = '';
+    $('waMainHeader').innerHTML = '<span>Seleccioná una conversación</span>';
+    $('waMessages').innerHTML = '<div class="wa-empty">Haz clic en una conversación para ver los mensajes</div>';
+  }
+  loadWhatsApp(); // This will show the start button
 });
 
 async function loadConversations() {

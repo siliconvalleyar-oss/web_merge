@@ -138,6 +138,15 @@ router.post('/whatsapp-start', authMiddleware, async (req, res) => {
   }
 });
 
+router.post('/whatsapp-reset', authMiddleware, async (req, res) => {
+  try {
+    await whatsapp.resetSession();
+    res.json({ success: true, status: 'reset' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/whatsapp-messages', authMiddleware, (req, res) => {
   try {
     const messages = whatsapp.getMessages();

@@ -1,6 +1,8 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const db = require('../database/db');
 const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 let client = null;
 let qrCode = null;
@@ -69,6 +71,21 @@ function getMenuResponse(option) {
 }
 
 async function initWhatsApp() {
+  // Kill any stale Chrome processes using our session dir
+  try {
+    const stalePids = require('child_process').execSync(
+      "ps aux | grep 'chrome.*session-webmerge' | grep -v grep | awk '{print $2}'",
+      { encoding: 'utf-8' }
+    ).trim().split('\n').filter(Boolean);
+    if (stalePids.length > 0) {
+      console.log(`  🧹 Limpiando ${stalePids.length} proceso(s) Chrome de sesión anterior...`);
+      stalePids.forEach(pid => {
+        try { process.kill(parseInt(pid)); } catch {}
+      });
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  } catch {} // ps aux may fail in some environments
+
   const chromePath = findChrome();
   const puppeteerOpts = {
     headless: true,
@@ -278,4 +295,25 @@ async function deleteConversation(number) {
   }
 }
 
-module.exports = { initWhatsApp, stopWhatsApp, getStatus, getMessages, getConversations, getConversationMessages, markConversationRead, markConversationUnread, sendMessage, deleteConversation };
+async function resetSession() {
+  try {
+    if (client) {
+      try { await client.destroy(); } catch {}
+      client = null;
+    }
+    const sessionDir = path.join(__dirname, '..', '.wwebjs_auth', 'session-webmerge-bot');
+    if (fs.existsSync(sessionDir)) {
+      fs.rmSync(sessionDir, { recursive: true, force: true });
+      console.log('  🗑 Sesión WhatsApp eliminada');
+    }
+    status = 'disconnected';
+    qrCode = null;
+    console.log('🔄 Sesión WhatsApp reseteada — escaneá el QR con otro número');
+    return true;
+  } catch (err) {
+    console.error('Error resetting session:', err.message);
+    return false;
+  }
+}
+
+module.exports = { initWhatsApp, stopWhatsApp, getStatus, getMessages, getConversations, getConversationMessages, markConversationRead, markConversationUnread, sendMessage, deleteConversation, resetSession };

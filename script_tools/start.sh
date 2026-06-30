@@ -19,6 +19,78 @@ PORT="${2:-8080}"
 PID_FILE=".server.pid"
 
 case "$CMD" in
+  menu|interactive|"")
+    while true; do
+      clear
+      echo "  ╔═══════════════════════════════════════╗"
+      echo "  ║      WebMerge Studio — Menu           ║"
+      echo "  ╠═══════════════════════════════════════╣"
+      # Check server status
+      STATUS_TEXT="✗ Detenido"
+      STATUS_PID=""
+      if [ -f "$PID_FILE" ]; then
+        SPID=$(cat "$PID_FILE")
+        if kill -0 "$SPID" 2>/dev/null; then
+          STATUS_TEXT="✓ Corriendo (PID $SPID)"
+          STATUS_PID=$SPID
+        fi
+      else
+        SPID=$(lsof -ti :"$PORT" 2>/dev/null || true)
+        if [ -n "$SPID" ]; then
+          STATUS_TEXT="✓ Corriendo (PID $SPID)"
+          STATUS_PID=$SPID
+        fi
+      fi
+      if [ -n "$STATUS_PID" ]; then
+        # Get WhatsApp status from API if possible
+        WA_STATUS=$(curl -s --max-time 3 http://localhost:$PORT/api/admin/whatsapp-status 2>/dev/null | grep -o '"status":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
+        [ -z "$WA_STATUS" ] && WA_STATUS="unknown"
+      else
+        WA_STATUS="—"
+      fi
+      echo "  ║  Servidor: $STATUS_TEXT"
+      echo "  ║  WhatsApp: $WA_STATUS"
+      echo "  ║  Puerto:   $PORT"
+      echo "  ║  Admin:    http://localhost:$PORT/admin"
+      echo "  ╠═══════════════════════════════════════╣"
+      echo "  ║  1) 🚀  Iniciar servidor              ║"
+      echo "  ║  2) 🛑  Detener servidor              ║"
+      echo "  ║  3) 🔄  Reiniciar servidor            ║"
+      echo "  ║  4) 📊  Ver logs                      ║"
+      echo "  ║  5) 🧹  Limpiar sesión WhatsApp       ║"
+      echo "  ║  0) ❌  Salir                         ║"
+      echo "  ╚═══════════════════════════════════════╝"
+      echo ""
+      read -p "  Opción: " OPT
+      case "$OPT" in
+        1) "$0" start "$PORT" & ;;
+        2) "$0" stop "$PORT" ;;
+        3) "$0" restart "$PORT" & sleep 3 ;;
+        4)
+           if [ -f /tmp/server.log ]; then
+             tail -30 /tmp/server.log
+           else
+             echo "  ! No hay logs disponibles"
+           fi
+           echo ""; read -p "  Enter para volver al menú..." _
+           ;;
+        5)
+           echo "  → Deteniendo y limpiando sesión WhatsApp..."
+           TOKEN=$(curl -s --max-time 5 -X POST http://localhost:$PORT/api/admin/login -H 'Content-Type: application/json' -d '{"username":"admin","password":"admin123"}' 2>/dev/null | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+           if [ -n "$TOKEN" ]; then
+             curl -s --max-time 5 -X POST http://localhost:$PORT/api/admin/whatsapp-reset -H "Authorization: Bearer $TOKEN" > /dev/null
+             echo "  ✓ Sesión eliminada"
+           else
+             echo "  ! No se pudo conectar con el servidor"
+           fi
+           echo ""; read -p "  Enter para volver al menú..." _
+           ;;
+        0) echo "  👋 Hasta luego!"; exit 0 ;;
+        *) echo "  Opción inválida"; sleep 1 ;;
+      esac
+    done
+    ;;
+
   stop)
     if [ -f "$PID_FILE" ]; then
       PID=$(cat "$PID_FILE")
@@ -31,6 +103,12 @@ case "$CMD" in
       else
         echo "  ! No hay servidor corriendo en puerto $PORT"
       fi
+    fi
+    # Clean up any stale Chrome processes for WhatsApp sessions
+    CHROME_PIDS=$(ps aux | grep 'chrome.*session-webmerge' | grep -v grep | awk '{print $2}' || true)
+    if [ -n "$CHROME_PIDS" ]; then
+      kill $CHROME_PIDS 2>/dev/null
+      echo "  ✓ Procesos Chrome de WhatsApp limpiados"
     fi
     exit 0
     ;;
@@ -64,6 +142,21 @@ case "$CMD" in
     ;;
 
   start)
+    # Kill any existing process on the port
+    OLD_PID=$(lsof -ti :"$PORT" 2>/dev/null || true)
+    if [ -n "$OLD_PID" ]; then
+      echo "  → Puerto $PORT ocupado, deteniendo proceso anterior (PID $OLD_PID)..."
+      kill "$OLD_PID" 2>/dev/null
+      sleep 2
+    fi
+    # Clean up stale Chrome processes for WhatsApp sessions
+    STALE_CHROME=$(ps aux | grep 'chrome.*session-webmerge' | grep -v grep | awk '{print $2}' || true)
+    if [ -n "$STALE_CHROME" ]; then
+      kill $STALE_CHROME 2>/dev/null
+      sleep 1
+    fi
+    rm -f "$PID_FILE"
+
     export PORT
     echo "  ╔═══════════════════════════════════════╗"
     echo "  ║      WebMerge Studio                  ║"
