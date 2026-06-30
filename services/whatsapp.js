@@ -116,6 +116,13 @@ Mientras tanto, escribí *menu* para ver las opciones disponibles.`;
       await msg.reply(response);
       console.log(`  ✅ Respondido a ${userNumber}: "${response.substring(0, 60)}..."`);
 
+      try {
+        const chat = await msg.getChat();
+        await chat.markUnread();
+      } catch (e) {
+        /* si falla marcar como no leido, no es critico */
+      }
+
       db.prepare(
         'INSERT INTO whatsapp_messages (number, message, response) VALUES (?, ?, ?)'
       ).run(userNumber, userQuery, response);
