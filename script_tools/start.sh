@@ -104,11 +104,16 @@ case "$CMD" in
         echo "  ! No hay servidor corriendo en puerto $PORT"
       fi
     fi
-    # Clean up any stale Chrome processes for WhatsApp sessions
-    CHROME_PIDS=$(ps aux | grep 'chrome.*session-webmerge' | grep -v grep | awk '{print $2}' || true)
-    if [ -n "$CHROME_PIDS" ]; then
-      kill $CHROME_PIDS 2>/dev/null
-      echo "  ✓ Procesos Chrome de WhatsApp limpiados"
+    # Clean up any stale browser processes for WhatsApp sessions
+    STALE_PIDS=""
+    STALE_PIDS="$STALE_PIDS $(ps aux | grep 'chrome.*session-webmerge' | grep -v grep | awk '{print $2}' || true)"
+    STALE_PIDS="$STALE_PIDS $(ps aux | grep 'chromium.*session-webmerge' | grep -v grep | awk '{print $2}' || true)"
+    STALE_PIDS="$STALE_PIDS $(ps aux | grep '\.wwebjs_auth/session-webmerge' | grep -v grep | awk '{print $2}' || true)"
+    STALE_PIDS="$STALE_PIDS $(ps -ef | grep '\.wwebjs_auth/session-webmerge' | grep -v grep | awk '{print $2}' || true)"
+    STALE_PIDS=$(echo "$STALE_PIDS" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+    if [ -n "$STALE_PIDS" ]; then
+      kill $STALE_PIDS 2>/dev/null
+      echo "  ✓ Procesos de sesión WhatsApp limpiados"
     fi
     exit 0
     ;;
@@ -149,10 +154,15 @@ case "$CMD" in
       kill "$OLD_PID" 2>/dev/null
       sleep 2
     fi
-    # Clean up stale Chrome processes for WhatsApp sessions
-    STALE_CHROME=$(ps aux | grep 'chrome.*session-webmerge' | grep -v grep | awk '{print $2}' || true)
-    if [ -n "$STALE_CHROME" ]; then
-      kill $STALE_CHROME 2>/dev/null
+    # Clean up stale browser processes for WhatsApp sessions
+    STALE_PIDS=""
+    STALE_PIDS="$STALE_PIDS $(ps aux | grep 'chrome.*session-webmerge' | grep -v grep | awk '{print $2}' || true)"
+    STALE_PIDS="$STALE_PIDS $(ps aux | grep 'chromium.*session-webmerge' | grep -v grep | awk '{print $2}' || true)"
+    STALE_PIDS="$STALE_PIDS $(ps aux | grep '\.wwebjs_auth/session-webmerge' | grep -v grep | awk '{print $2}' || true)"
+    STALE_PIDS="$STALE_PIDS $(ps -ef | grep '\.wwebjs_auth/session-webmerge' | grep -v grep | awk '{print $2}' || true)"
+    STALE_PIDS=$(echo "$STALE_PIDS" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+    if [ -n "$STALE_PIDS" ]; then
+      kill $STALE_PIDS 2>/dev/null
       sleep 1
     fi
     rm -f "$PID_FILE"

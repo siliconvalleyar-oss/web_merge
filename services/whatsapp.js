@@ -112,17 +112,30 @@ function findChrome() {
 }
 
 async function initWhatsApp() {
-  // Kill any stale Chrome processes using our session dir
+  // Kill any stale browser processes using our session dir
   try {
-    const stalePids = require('child_process').execSync(
-      "ps aux | grep 'chrome.*session-webmerge' | grep -v grep | awk '{print $2}'",
-      { encoding: 'utf-8' }
-    ).trim().split('\n').filter(Boolean);
-    if (stalePids.length > 0) {
-      console.log(`  🧹 Limpiando ${stalePids.length} proceso(s) Chrome de sesión anterior...`);
-      stalePids.forEach(pid => {
-        try { process.kill(parseInt(pid)); } catch {}
-      });
+    const sessionDir = path.join(__dirname, '..', '.wwebjs_auth', 'session-webmerge-bot');
+    const stalePids = new Set();
+    const patterns = [
+      `chrome.*session-webmerge`,
+      `chromium.*session-webmerge`,
+      sessionDir,
+    ];
+    const cmds = [
+      `ps aux | grep '${patterns[0]}' | grep -v grep | awk '{print $2}'`,
+      `ps aux | grep '${patterns[1]}' | grep -v grep | awk '{print $2}'`,
+      `ps aux | grep '${patterns[2]}' | grep -v grep | awk '{print $2}'`,
+      `ps -ef | grep '${patterns[2]}' | grep -v grep | awk '{print $2}'`,
+    ];
+    for (const cmd of cmds) {
+      try {
+        const out = execSync(cmd, { encoding: 'utf-8', timeout: 5000 }).trim();
+        if (out) out.split('\n').filter(Boolean).forEach(pid => stalePids.add(parseInt(pid)));
+      } catch {}
+    }
+    if (stalePids.size > 0) {
+      console.log(`  🧹 Limpiando ${stalePids.size} proceso(s) de sesión anterior...`);
+      stalePids.forEach(pid => { try { process.kill(pid); } catch {} });
       await new Promise(r => setTimeout(r, 2000));
     }
   } catch {} // ps aux may fail in some environments
