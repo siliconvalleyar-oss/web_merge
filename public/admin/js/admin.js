@@ -1247,35 +1247,6 @@ function renderItemEditor(item) {
   return html;
 }
 
-function bindInput(id, key, path) {
-  const el = document.querySelector(`[data-bind="${id}-${path}"]`);
-  if (el) {
-    el.addEventListener('input', () => {
-      const item = pageSections.find(i => i.id === id);
-      if (!item) return;
-      const parts = path.split('.');
-      let obj = item.content;
-      for (let i = 0; i < parts.length - 1; i++) {
-        if (!obj[parts[i]]) obj[parts[i]] = {};
-        obj = obj[parts[i]];
-      }
-      obj[parts[parts.length - 1]] = el.value;
-    });
-  }
-}
-
-function bindArrayItem(id, arrayPath, index, field) {
-  const el = document.querySelector(`[data-bind="${id}-${arrayPath}-${index}-${field}"]`);
-  if (el) {
-    el.addEventListener('input', () => {
-      const item = pageSections.find(i => i.id === id);
-      if (!item) return;
-      const arr = getNested(item.content, arrayPath);
-      if (arr && arr[index]) arr[index][field] = el.value;
-    });
-  }
-}
-
 function getNested(obj, path) {
   return path.split('.').reduce((o, p) => o ? o[p] : null, obj);
 }
@@ -1290,26 +1261,40 @@ function setNested(obj, path, value) {
   o[parts[parts.length - 1]] = value;
 }
 
+// Global input delegation — updates pageSections on every keystroke
+document.addEventListener('input', e => {
+  if (!e.target.closest('#pageEditor')) return;
+  const bind = e.target.dataset.bind;
+  if (!bind) return;
+  const sep = bind.indexOf(':');
+  if (sep === -1) return;
+  const id = parseInt(bind.substring(0, sep));
+  const path = bind.substring(sep + 1);
+  const item = pageSections.find(i => i.id === id);
+  if (!item) return;
+  setNested(item.content, path, e.target.value);
+});
+
 function textInput(id, path, label, value, placeholder = '') {
   const v = typeof value === 'string' ? value.replace(/"/g, '&quot;') : (value || '');
-  return `<div class="pe-field"><label>${label}</label><input type="text" class="pe-input" data-bind="${id}-${path}" value="${v}" placeholder="${placeholder}"></div>`;
+  return `<div class="pe-field"><label>${label}</label><input type="text" class="pe-input" data-bind="${id}:${path}" value="${v}" placeholder="${placeholder}"></div>`;
 }
 
 function textareaInput(id, path, label, value, placeholder = '') {
-  return `<div class="pe-field"><label>${label}</label><textarea class="pe-input pe-textarea" data-bind="${id}-${path}" placeholder="${placeholder}">${value || ''}</textarea></div>`;
+  return `<div class="pe-field"><label>${label}</label><textarea class="pe-input pe-textarea" data-bind="${id}:${path}" placeholder="${placeholder}">${value || ''}</textarea></div>`;
 }
 
 function colorInput(id, path, label, value) {
-  return `<div class="pe-field pe-field-sm"><label>${label}</label><input type="color" class="pe-color" data-bind="${id}-${path}" value="${value || '#000000'}"></div>`;
+  return `<div class="pe-field pe-field-sm"><label>${label}</label><input type="color" class="pe-color" data-bind="${id}:${path}" value="${value || '#000000'}"></div>`;
 }
 
 function imageUploader(id, path, label, currentUrl) {
   const preview = currentUrl ? `<img src="${currentUrl}" class="pe-img-preview" style="max-width:120px;max-height:80px;border-radius:6px">` : '';
   return `<div class="pe-field">
     <label>${label}</label>
-    <div class="pe-img-upload" data-bind="${id}-${path}">
+    <div class="pe-img-upload" data-bind="${id}:${path}">
       ${preview}
-      <input type="text" class="pe-input" value="${currentUrl || ''}" placeholder="URL o subí una imagen" data-bind="${id}-${path}">
+      <input type="text" class="pe-input" value="${currentUrl || ''}" placeholder="URL o subí una imagen" data-bind="${id}:${path}">
       <button class="btn btn-sm" onclick="uploadImage(this, '${id}', '${path}')">📁 Subir</button>
       <input type="file" accept="image/*" style="display:none" onchange="handleFileUpload(this, '${id}', '${path}')">
     </div>
@@ -1361,8 +1346,8 @@ function navbarEditor(id, c, key) {
   if (c.items && c.items.length) {
     c.items.forEach((item, i) => {
       html += `<div class="pe-array-item">
-        <input type="text" class="pe-input pe-array-input" value="${item.label}" placeholder="Texto" data-bind="${id}-items-${i}-label">
-        <input type="text" class="pe-input pe-array-input" value="${item.href}" placeholder="#seccion" data-bind="${id}-items-${i}-href">
+        <input type="text" class="pe-input pe-array-input" value="${item.label}" placeholder="Texto" data-bind="${id}:items.${i}.label">
+        <input type="text" class="pe-input pe-array-input" value="${item.href}" placeholder="#seccion" data-bind="${id}:items.${i}.href">
         <button class="btn-icon delete" onclick="removeNavItem(${id}, ${i})">✕</button>
       </div>`;
     });
@@ -1401,7 +1386,7 @@ function servicesEditor(id, c, key) {
   if (c.features && c.features.length) {
     c.features.forEach((f, i) => {
       html += `<div class="pe-array-item">
-        <input type="text" class="pe-input pe-array-input" value="${f}" data-bind="${id}-features-${i}">
+        <input type="text" class="pe-input pe-array-input" value="${f}" data-bind="${id}:features.${i}">
         <button class="btn-icon delete" onclick="removeArrayItem('features', ${id}, ${i})">✕</button>
       </div>`;
     });
@@ -1421,7 +1406,7 @@ function projectsEditor(id, c, key) {
   if (c.tech && c.tech.length) {
     c.tech.forEach((t, i) => {
       html += `<div class="pe-array-item">
-        <input type="text" class="pe-input pe-array-input" value="${t}" data-bind="${id}-tech-${i}">
+        <input type="text" class="pe-input pe-array-input" value="${t}" data-bind="${id}:tech.${i}">
         <button class="btn-icon delete" onclick="removeArrayItem('tech', ${id}, ${i})">✕</button>
       </div>`;
     });
@@ -1466,7 +1451,7 @@ function footerEditor(id, c, key) {
     Object.entries(c.social).forEach(([platform, url]) => {
       html += `<div class="pe-array-item">
         <span class="pe-social-label">${platform}</span>
-        <input type="text" class="pe-input pe-array-input" value="${url}" data-bind="${id}-social.${platform}" placeholder="URL">
+        <input type="text" class="pe-input pe-array-input" value="${url}" data-bind="${id}:social.${platform}" placeholder="URL">
       </div>`;
     });
     html += `</div></div>`;
