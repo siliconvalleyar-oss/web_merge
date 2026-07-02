@@ -252,9 +252,11 @@ async function loadConfig() {
         const display = range.nextElementSibling;
         if (display) display.textContent = parseFloat(range.value).toFixed(2);
       }
+      applyMascotConfig(c);
     }
   } catch {}
   loadAdminConfig();
+  loadMascotFiles();
 }
 
 $('saveConfigBtn').addEventListener('click', async () => {
@@ -381,6 +383,55 @@ async function loadAdminConfig() {
       if (adminColors.admin_bg) applyAdminColors(adminColors);
     }
   } catch {}
+}
+
+/* ── Mascot ──────────────────────────────────────────────── */
+async function loadMascotFiles() {
+  const sel = $('mascotFile');
+  if (!sel) return;
+  try {
+    const res = await fetch('/api/simbols/list');
+    const list = await res.json();
+    if (list && !list.error && list.length) {
+      sel.innerHTML = list.map(f => `<option value="${f}">${f}</option>`).join('');
+    } else {
+      sel.innerHTML = '<option value="simbol_git.svg">simbol_git.svg</option>';
+    }
+  } catch {
+    sel.innerHTML = '<option value="simbol_git.svg">simbol_git.svg</option>';
+  }
+}
+
+function toggleMascotSwitch() {
+  const hidden = $('mascotEnabled');
+  const track = $('mascotSwitchTrack');
+  const label = $('mascotSwitchLabel');
+  const isOn = hidden.value === '1';
+  hidden.value = isOn ? '0' : '1';
+  track.classList.toggle('on', !isOn);
+  label.textContent = isOn ? 'Desactivado' : 'Activado';
+}
+
+function applyMascotConfig(c) {
+  const hidden = $('mascotEnabled');
+  const track = $('mascotSwitchTrack');
+  const label = $('mascotSwitchLabel');
+  if (!hidden) return;
+  const enabled = c.mascot_enabled === '1' || c.mascot_enabled === true;
+  hidden.value = enabled ? '1' : '0';
+  track?.classList.toggle('on', enabled);
+  if (label) label.textContent = enabled ? 'Activado' : 'Desactivado';
+
+  const xRange = document.querySelector('[name="mascot_pos_x"]');
+  if (xRange) {
+    const display = xRange.nextElementSibling;
+    if (display) display.textContent = (c.mascot_pos_x || '50') + '%';
+  }
+  const yRange = document.querySelector('[name="mascot_pos_y"]');
+  if (yRange) {
+    const display = yRange.nextElementSibling;
+    if (display) display.textContent = (c.mascot_pos_y || '50') + '%';
+  }
 }
 
 $('saveAdminConfigBtn')?.addEventListener('click', async () => {

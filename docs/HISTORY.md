@@ -1,10 +1,18 @@
 # Historial de Cambios — WebMerge Studio
 
+## v4.6.8 (2026-07-02)
+- feat: initMascot() en main.js carga SVG desde config y lo posiciona
+- feat: admin UI para mascota (switch on/off, selector SVG, sliders X/Y)
+- feat: switch toggle con CSS animado
+- fix: transform translate(-50%,-50%) en CSS para centrar mascota en coordenadas X/Y
+- chore: bump 4.6.7 → 4.6.8
+
 ## v4.6.7 (2026-07-02)
 - feat: mascota SVG flotante animada (simbol_git.svg) superpuesta al carrusel
-- feat: config de mascota en admin (activar, seleccionar SVG, posición)
-- feat: toggle switch minimalista para WhatsApp en admin
+- feat: config de mascota en admin (activar, seleccionar SVG, posición X/Y)
+- feat: toggle switch minimalista en admin SVG selector
 - fix: script fix-chrome.sh ahora instala libopenh264-7 para Raspberry Pi
+- fix: librería libopenh264 compartida faltante en Raspberry Pi resuelta
 - chore: bump 4.6.6 → 4.6.7
 
 ## v4.6.0 (2026-06-30)

@@ -132,7 +132,8 @@ ul { list-style: none; }
 /* ── Mascot ──────────────────────────────────────────────── */
 .mascot {
   position: fixed; z-index: 2;
-  pointer-events: none;
+  pointer-events: none; width: 80px;
+  transform: translate(-50%, -50%);
   opacity: 0;
   transition: opacity 0.5s ease;
 }

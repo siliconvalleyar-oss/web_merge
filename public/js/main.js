@@ -41,6 +41,47 @@ function applyCarouselOpacity() {
 
 Store.on('config', applyCarouselOpacity);
 
+/* ── Mascot ──────────────────────────────────────────────── */
+let mascotEl = document.getElementById('mascot');
+let mascotInner = document.getElementById('mascotInner');
+
+async function loadMascotSVG(filename) {
+  if (!filename || !mascotInner) return;
+  try {
+    const res = await fetch(`/assets/simbols/${filename}`);
+    if (!res.ok) throw new Error('Not found');
+    const svgText = await res.text();
+    mascotInner.innerHTML = svgText;
+  } catch {
+    mascotInner.innerHTML = '';
+  }
+}
+
+function applyMascotPosition(x, y) {
+  if (!mascotEl) return;
+  const posX = parseFloat(x);
+  const posY = parseFloat(y);
+  if (!isNaN(posX)) mascotEl.style.left = posX + '%';
+  if (!isNaN(posY)) mascotEl.style.top = posY + '%';
+}
+
+function applyMascotConfig(config) {
+  if (!mascotEl) return;
+  const enabled = config.mascot_enabled === '1' || config.mascot_enabled === true;
+  mascotEl.classList.toggle('visible', enabled);
+  if (enabled) {
+    loadMascotSVG(config.mascot_file || 'simbol_git.svg');
+    applyMascotPosition(config.mascot_pos_x, config.mascot_pos_y);
+  }
+}
+
+function initMascot() {
+  const cfg = Store.get('config');
+  if (cfg && Object.keys(cfg).length) applyMascotConfig(cfg);
+}
+
+Store.on('config', applyMascotConfig);
+
 document.addEventListener('DOMContentLoaded', () => {
   UI.initCursor();
   UI.initNavbar();
@@ -60,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Store.loadConfig();
   initCarousel();
+  initMascot();
 
   setTimeout(() => UI.showToast('Bienvenido a WebMerge Studio v4', 'info'), 1500);
 });
