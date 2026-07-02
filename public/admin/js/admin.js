@@ -1146,7 +1146,7 @@ function renderPageEditor(container) {
   for (const [key, items] of Object.entries(grouped)) {
     const label = SECTION_LABELS[key] || `📄 ${key}`;
     items.sort((a, b) => a.sort_order - b.sort_order);
-    html += `<div class="pe-section" data-section="${key}">
+    html += `<div class="pe-section collapsed" data-section="${key}">
       <div class="pe-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
         <span>${label}</span>
         <span class="pe-toggle">▼</span>
