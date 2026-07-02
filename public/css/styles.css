@@ -129,6 +129,22 @@ ul { list-style: none; }
   border-color: var(--color-primary);
 }
 
+/* ── Mascot ──────────────────────────────────────────────── */
+.mascot {
+  position: fixed; z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.mascot.visible { opacity: 1; }
+.mascot-inner svg {
+  width: 100%; height: auto;
+  display: block;
+}
+@media (max-width: 768px) {
+  .mascot { display: none; }
+}
+
 /* ── Utilities ──────────────────────────────────────────── */
 .container {
   max-width: var(--container-xl);

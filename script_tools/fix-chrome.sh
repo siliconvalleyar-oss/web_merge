@@ -11,6 +11,23 @@ cd "$SCRIPT_DIR/.."
 
 CHROME_BIN=""
 
+# En Raspberry Pi / ARM suele faltar libopenh264
+if ldconfig -p 2>/dev/null | grep -qF "libopenh264.so.7"; then
+  : # ya está
+elif [ -f /usr/lib/arm-linux-gnueabihf/libopenh264.so.7 ] || [ -f /usr/lib/aarch64-linux-gnu/libopenh264.so.7 ]; then
+  : # ya está en una ruta conocida
+else
+  echo "  → libopenh264.so.7 no encontrado (común en Raspberry Pi)."
+  if command -v apt &>/dev/null; then
+    if sudo -n true 2>/dev/null; then
+      echo "  → Instalando libopenh264-7..."
+      sudo apt install -y --fix-missing libopenh264-7
+    else
+      echo "  → Ejecutá: sudo apt install --fix-missing libopenh264-7"
+    fi
+  fi
+fi
+
 echo "  → Buscando Chrome/Chromium..."
 for c in google-chrome-stable google-chrome chromium-browser chromium; do
   path=$(command -v "$c" 2>/dev/null || true)

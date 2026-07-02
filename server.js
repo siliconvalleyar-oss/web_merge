@@ -80,6 +80,10 @@ const adminConfigDefaults = [
   ['admin_border',  '#2d2d44'],
   ['admin_surface', '#1a1a2e'],
   ['carousel_overlay_opacity', '0.5'],
+  ['mascot_enabled',  '1'],
+  ['mascot_file',     'simbol_git.svg'],
+  ['mascot_pos_x',    '20'],
+  ['mascot_pos_y',    '60'],
 ];
 const insertConfig = db.prepare('INSERT OR IGNORE INTO config (config_key, config_value) VALUES (?, ?)');
 for (const [k, v] of adminConfigDefaults) insertConfig.run(k, v);
@@ -135,6 +139,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/assets/carrusel', express.static(path.join(__dirname, 'assets/carrusel')));
+app.use('/assets/simbols', express.static(path.join(__dirname, 'assets/simbols')));
+
+app.get('/api/simbols/list', (req, res) => {
+  try {
+    const dir = path.join(__dirname, 'assets/simbols');
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.svg')).sort();
+    res.json(files);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.get('/api/carrusel/images', (req, res) => {
   try {

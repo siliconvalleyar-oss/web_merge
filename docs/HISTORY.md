@@ -1,5 +1,12 @@
 # Historial de Cambios — WebMerge Studio
 
+## v4.6.7 (2026-07-02)
+- feat: mascota SVG flotante animada (simbol_git.svg) superpuesta al carrusel
+- feat: config de mascota en admin (activar, seleccionar SVG, posición)
+- feat: toggle switch minimalista para WhatsApp en admin
+- fix: script fix-chrome.sh ahora instala libopenh264-7 para Raspberry Pi
+- chore: bump 4.6.6 → 4.6.7
+
 ## v4.6.0 (2026-06-30)
 - fix: burbujas de WhatsApp en admin — cliente a la derecha, bot a la izquierda, cada fila DB genera dos burbujas
 - fix: tabs del admin panel en mobile — ahora se ven todas (antes solo FAQs por `display:block` heredado)
