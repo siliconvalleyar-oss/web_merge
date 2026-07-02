@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # ============================================================
 # WebMerge Studio — Fix Dependencies Script
-# Corrige el error "Cannot find module 'better-sqlite3'"
-# Ejecuta npm install y verifica que los módulos queden bien.
+# Corrige errores comunes:
+#   1) "Cannot find module 'better-sqlite3'" → npm install
+#   2) "Cannot open database because the directory does not exist" → crear data/
+# Ejecuta npm install y crea data/ si hace falta.
 # ============================================================
 set -e
 
@@ -34,4 +36,11 @@ else
   echo "  ✗ Error: better-sqlite3 no se instaló correctamente."
   echo "  → Revisa manualmente con: npm install"
   exit 1
+fi
+
+# Asegurar que el directorio data/ existe (setup-db.js falla si no)
+if [ ! -d "data" ]; then
+  echo "  → Creando directorio data/..."
+  mkdir -p data
+  echo "  ✓ Directorio data/ creado."
 fi

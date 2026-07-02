@@ -167,6 +167,8 @@ case "$CMD" in
     echo "  ╚═══════════════════════════════════════╝"
     echo ""
 
+    mkdir -p data
+
     if [ ! -f "data/webmerge.db" ]; then
       echo "  → Inicializando base de datos..."
       node setup-db.js
