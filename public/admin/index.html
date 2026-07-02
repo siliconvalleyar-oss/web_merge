@@ -123,6 +123,41 @@
                 <label>Nombre del chatbot</label>
                 <input type="text" name="chatbot_name" class="form-input">
               </div>
+              <div class="form-group" style="margin-top:12px;padding-top:16px;border-top:1px solid #2d2d44">
+                <label>Activar mascota</label>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="hidden" name="mascot_enabled" id="mascotEnabled" value="0">
+                  <label class="switch" onclick="toggleMascotSwitch()">
+                    <div class="switch-track" id="mascotSwitchTrack"><div class="switch-thumb"></div></div>
+                  </label>
+                  <span id="mascotSwitchLabel" style="font-size:13px;color:#999">Desactivado</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Archivo SVG</label>
+                <select name="mascot_file" id="mascotFile" class="form-input"></select>
+              </div>
+              <div class="form-group">
+                <label>Posición X (%)</label>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="range" name="mascot_pos_x" min="0" max="100" step="1" class="form-input" style="flex:1;padding:4px" oninput="this.nextElementSibling.textContent=this.value+'%'">
+                  <span style="font-size:13px;color:#9999aa;min-width:36px">50%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Posición Y (%)</label>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="range" name="mascot_pos_y" min="0" max="100" step="1" class="form-input" style="flex:1;padding:4px" oninput="this.nextElementSibling.textContent=this.value+'%'">
+                  <span style="font-size:13px;color:#9999aa;min-width:36px">50%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Tamaño (px)</label>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="range" name="mascot_size" min="20" max="300" step="4" class="form-input" style="flex:1;padding:4px" oninput="this.nextElementSibling.textContent=this.value+'px'">
+                  <span style="font-size:13px;color:#9999aa;min-width:40px">80px</span>
+                </div>
+              </div>
             </form>
           </div>
 
@@ -158,44 +193,6 @@
                 <input type="color" name="admin_surface" class="color-picker">
               </div>
             </form>
-
-            <div class="config-grid" style="margin-top:20px;padding-top:20px;border-top:1px solid #2d2d44">
-              <div class="form-group">
-                <label>Activar mascota</label>
-                <div style="display:flex;align-items:center;gap:12px">
-                  <input type="hidden" name="mascot_enabled" id="mascotEnabled" value="0">
-                  <label class="switch" onclick="toggleMascotSwitch()">
-                    <div class="switch-track" id="mascotSwitchTrack"><div class="switch-thumb"></div></div>
-                  </label>
-                  <span id="mascotSwitchLabel" style="font-size:13px;color:#999">Desactivado</span>
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Archivo SVG</label>
-                <select name="mascot_file" id="mascotFile" class="form-input"></select>
-              </div>
-              <div class="form-group">
-                <label>Posición X (%)</label>
-                <div style="display:flex;align-items:center;gap:12px">
-                  <input type="range" name="mascot_pos_x" min="0" max="100" step="1" class="form-input" style="flex:1;padding:4px" oninput="this.nextElementSibling.textContent=this.value+'%'">
-                  <span style="font-size:13px;color:#9999aa;min-width:36px">50%</span>
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Posición Y (%)</label>
-                <div style="display:flex;align-items:center;gap:12px">
-                  <input type="range" name="mascot_pos_y" min="0" max="100" step="1" class="form-input" style="flex:1;padding:4px" oninput="this.nextElementSibling.textContent=this.value+'%'">
-                  <span style="font-size:13px;color:#9999aa;min-width:36px">50%</span>
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Tamaño (px)</label>
-                <div style="display:flex;align-items:center;gap:12px">
-                  <input type="range" name="mascot_size" min="20" max="300" step="4" class="form-input" style="flex:1;padding:4px" oninput="this.nextElementSibling.textContent=this.value+'px'">
-                  <span style="font-size:13px;color:#9999aa;min-width:40px">80px</span>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div style="display:flex;gap:8px">
