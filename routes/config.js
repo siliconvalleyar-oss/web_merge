@@ -8,6 +8,7 @@ router.get('/', (req, res) => {
     const rows = db.prepare('SELECT config_key, config_value FROM config').all();
     const config = {};
     rows.forEach(r => { config[r.config_key] = r.config_value; });
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.json(config);
   } catch (err) {
     res.status(500).json({ error: err.message });

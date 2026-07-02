@@ -10,6 +10,11 @@
 - feat: config mascot_size en setup-db.js y server.js
 - chore: bump 4.6.8 → 4.6.9
 
+## v4.7.0 (2026-07-02)
+- fix: GET /api/config sin cache headers → navegador cacheaba respuesta y nunca veía cambios
+- fix: Store.loadConfig() sin cache buster → misma respuesta cacheada siempre
+- chore: bump 4.6.9 → 4.7.0
+
 ## v4.6.8 (2026-07-02)
 - feat: initMascot() en main.js carga SVG desde config y lo posiciona
 - feat: admin UI para mascota (switch on/off, selector SVG, sliders X/Y)

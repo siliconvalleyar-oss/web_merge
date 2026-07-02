@@ -40,7 +40,7 @@ const Store = {
 
   async loadConfig() {
     try {
-      const res = await fetch('/api/config');
+      const res = await fetch('/api/config?_=' + Date.now());
       const config = await res.json();
       this.state.config = config;
       this._notify('config', config);
