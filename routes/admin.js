@@ -442,6 +442,38 @@ router.delete('/menu-options/:id', authMiddleware, (req, res) => {
   }
 });
 
+/* ── Page content CRUD (web front editor) ───────────────── */
+router.get('/page-content', authMiddleware, (req, res) => {
+  try {
+    const rows = db.prepare('SELECT * FROM page_content ORDER BY section_key, sort_order ASC').all();
+    const parsed = rows.map(r => ({ ...r, content: JSON.parse(r.content) }));
+    res.json(parsed);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.put('/page-content/:id', authMiddleware, (req, res) => {
+  try {
+    const { content } = req.body;
+    db.prepare('UPDATE page_content SET content = ?, updated_at = datetime(\'now\') WHERE id = ?').run(JSON.stringify(content), req.params.id);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.put('/page-content/:id/reorder', authMiddleware, (req, res) => {
+  try {
+    const { sort_order } = req.body;
+    db.prepare('UPDATE page_content SET sort_order = ?, updated_at = datetime(\'now\') WHERE id = ?').run(sort_order, req.params.id);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.put('/page-content/reset', authMiddleware, (req, res) => {
+  try {
+    db.prepare("UPDATE page_content SET content = '{}', updated_at = datetime('now') WHERE section_key = ? AND item_key = ?").run(req.body.section_key, req.body.item_key);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 /* ── Send WhatsApp message (response role) ──────────────── */
 router.post('/whatsapp-send', authMiddleware, roleMiddleware('master', 'response'), async (req, res) => {
   try {

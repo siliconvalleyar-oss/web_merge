@@ -136,11 +136,77 @@ const app = express();
 const PORT = config.PORT;
 const fs = require('fs');
 
+const multer = require('multer');
+const uploadStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, path.join(__dirname, 'assets', 'uploads')),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_'))
+});
+const upload = multer({ storage: uploadStorage });
+
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/assets/carrusel', express.static(path.join(__dirname, 'assets/carrusel')));
 app.use('/assets/simbols', express.static(path.join(__dirname, 'assets/simbols')));
+app.use('/assets/uploads', express.static(path.join(__dirname, 'assets/uploads')));
+
+/* ── Page content table (web front editor) ─────────────── */
+db.exec(`
+  CREATE TABLE IF NOT EXISTS page_content (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    section_key TEXT NOT NULL,
+    item_key    TEXT NOT NULL,
+    content     TEXT NOT NULL DEFAULT '{}',
+    sort_order  INTEGER DEFAULT 0,
+    enabled     INTEGER DEFAULT 1,
+    updated_at  TEXT DEFAULT (datetime('now'))
+  )
+`);
+const insertPage = db.prepare('INSERT OR IGNORE INTO page_content (section_key, item_key, content, sort_order, enabled) VALUES (?, ?, ?, ?, ?)');
+const pageSeed = [
+  ['navbar', 'main', JSON.stringify({ site_name: 'WebMerge Studio', logo: '', items: [{ label: 'Inicio', href: '#inicio' }, { label: 'Servicios', href: '#servicios' }, { label: 'Proyectos', href: '#proyectos' }, { label: 'FAQ', href: '#faq' }, { label: 'Nosotros', href: '#nosotros' }, { label: 'Contacto', href: '#contacto' }] }), 0, 1],
+  ['hero', 'main', JSON.stringify({ title: 'Transformamos ideas en', title_highlight: 'experiencias digitales', subtitle: 'Diseño y desarrollo de soluciones web modernas para impulsar tu negocio', description: '', cta_primary: { text: 'Nuestros servicios', href: '#servicios' }, cta_secondary: { text: 'Ver proyectos', href: '#proyectos' } }), 0, 1],
+  ['stats', 'uptime', JSON.stringify({ value: '99.9%', label: 'Uptime', icon: '📡' }), 0, 1],
+  ['stats', 'latency', JSON.stringify({ value: '<100ms', label: 'Latencia', icon: '⚡' }), 1, 1],
+  ['stats', 'projects', JSON.stringify({ value: '150+', label: 'Proyectos', icon: '🚀' }), 2, 1],
+  ['stats', 'support', JSON.stringify({ value: '∞', label: 'Soporte', icon: '💎' }), 3, 1],
+  ['services', 'ux-ui', JSON.stringify({ icon: '🎨', title: 'Diseño UI/UX', description: 'Interfaces intuitivas y atractivas con enfoque en la experiencia de usuario.', features: ['Wireframes y prototipos', 'Design systems', 'Animaciones UI', 'Pruebas de usabilidad'] }), 0, 1],
+  ['services', 'frontend', JSON.stringify({ icon: '⚛️', title: 'Desarrollo Frontend', description: 'SPAs interactivas con animaciones fluidas y rendimiento óptimo.', features: ['HTML + CSS + JS', 'GSAP + ScrollTrigger', 'Rive + Canvas', 'React + Next.js'] }), 1, 1],
+  ['services', 'backend', JSON.stringify({ icon: '🖥️', title: 'Backend & APIs', description: 'APIs robustas y escalables con las mejores tecnologías del mercado.', features: ['Node.js + Express', 'Python + FastAPI', 'Bases de datos SQL/NoSQL', 'WebSockets en tiempo real'] }), 2, 1],
+  ['services', 'responsive', JSON.stringify({ icon: '📱', title: 'Responsive & SEO', description: 'Sitios optimizados para todos los dispositivos y motores de búsqueda.', features: ['Diseño mobile-first', 'Optimización Core Web Vitals', 'SEO técnico y on-page', 'Performance audits'] }), 3, 1],
+  ['projects', 'electronica', JSON.stringify({ icon: '🛒', tag: 'E-commerce', title: 'ElectronicaStore', description: 'Tienda online de componentes electrónicos con Express, MySQL y vanilla JS SPA.', tech: ['Node.js', 'MySQL', 'Express'], link: '' }), 0, 1],
+  ['projects', 'techstore', JSON.stringify({ icon: '⚙️', tag: 'Dashboard', title: 'TechStore Server', description: 'Panel de administración y gestión de inventario con APIs RESTful y autenticación JWT.', tech: ['React', 'Node.js', 'MongoDB'], link: '' }), 1, 1],
+  ['projects', 'shoprive', JSON.stringify({ icon: '🎮', tag: 'Web App', title: 'ShopRive', description: 'Plataforma de ventas con animaciones inmersivas y carrito de compras en tiempo real.', tech: ['GSAP', 'Rive', 'Canvas'], link: '' }), 2, 1],
+  ['projects', 'scaleweb', JSON.stringify({ icon: '📊', tag: 'Corporate', title: 'ScaleWeb', description: 'Sitio corporativo con sistema de reservas, chat en vivo y panel de analytics.', tech: ['Python', 'FastAPI', 'PostgreSQL'], link: '' }), 3, 1],
+  ['about', 'mission', JSON.stringify({ title: 'Misión', text: 'Crear soluciones digitales que transformen negocios, combinando diseño innovador con tecnología de punta para ofrecer experiencias únicas.' }), 0, 1],
+  ['about', 'values', JSON.stringify({ icon: '💡', title: 'Innovación', text: 'Nos mantenemos a la vanguardia tecnológica para ofrecer soluciones modernas.' }), 1, 1],
+  ['about', 'values2', JSON.stringify({ icon: '🤝', title: 'Compromiso', text: 'Cada proyecto recibe atención personalizada y dedicación exclusiva.' }), 2, 1],
+  ['about', 'values3', JSON.stringify({ icon: '⭐', title: 'Calidad', text: 'Estándares rigurosos de desarrollo y diseño para resultados excepcionales.' }), 3, 1],
+  ['about', 'team_stats', JSON.stringify({ items: [{ value: '5+', label: 'Años exp' }, { value: '10+', label: 'Expertos' }, { value: '200+', label: 'Clientes' }] }), 4, 1],
+  ['footer', 'main', JSON.stringify({ brand: 'WebMerge Studio', description: 'Transformando ideas en experiencias digitales desde 2020.', social: { github: '#', linkedin: '#', twitter: '#' }, copyright: '© 2026 WebMerge Studio. Todos los derechos reservados.' }), 0, 1],
+  ['chatbot', 'main', JSON.stringify({ name: 'Boty', greeting: '👋 ¡Hola! Soy Boty, el asistente virtual de WebMerge Studio.', logo: '', theme: { primary: '#6c5ce7', secondary: '#00cec9', bg: '#1a1a2e', text: '#ffffff' } }), 0, 1],
+];
+db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_page_section_item ON page_content(section_key, item_key)');
+const seedPage = db.transaction(() => {
+  const count = db.prepare('SELECT COUNT(*) as c FROM page_content').get().c;
+  if (count === 0) { for (const row of pageSeed) insertPage.run(...row); }
+});
+seedPage();
+
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    res.json({ url: '/assets/uploads/' + req.file.filename });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/uploads/list', (req, res) => {
+  try {
+    const dir = path.join(__dirname, 'assets/uploads');
+    const files = fs.readdirSync(dir).filter(f => /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(f)).sort().reverse();
+    res.json(files.map(f => ({ name: f, url: '/assets/uploads/' + f })));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 app.get('/api/simbols/list', (req, res) => {
   try {
@@ -161,6 +227,12 @@ app.get('/api/carrusel/images', (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+app.get('/api/page-content', (req, res) => {
+  try {
+    const rows = db.prepare("SELECT section_key, item_key, content, sort_order FROM page_content WHERE enabled = 1 ORDER BY CASE section_key WHEN 'navbar' THEN 0 WHEN 'hero' THEN 1 WHEN 'stats' THEN 2 WHEN 'services' THEN 3 WHEN 'projects' THEN 4 WHEN 'about' THEN 5 WHEN 'footer' THEN 6 WHEN 'chatbot' THEN 7 ELSE 8 END, sort_order ASC").all();
+    res.json(rows.map(r => ({ ...r, content: JSON.parse(r.content) })));
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 app.use('/api/faqs',   require('./routes/faqs'));
 app.use('/api/config', require('./routes/config'));

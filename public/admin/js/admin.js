@@ -63,6 +63,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     if (tab.dataset.tab === 'users') loadUsers();
     if (tab.dataset.tab === 'menu') loadMenuOptions();
     if (tab.dataset.tab === 'whatsapp') { loadWhatsApp(); startWhatsAppPolling(); }
+    if (tab.dataset.tab === 'control') loadControlPanel();
     if (tab.dataset.tab === 'config') loadConfig();
   });
 });
@@ -1080,6 +1081,455 @@ function showToast(msg) {
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+
+/* ── Panel de Control (Web Front Editor) ─────────────────── */
+let pageSections = [];
+let pageSectionOrder = [];
+
+const SECTION_LABELS = {
+  navbar: '🧭 Barra de navegación',
+  hero: '🏠 Hero / Portada',
+  stats: '📊 Estadísticas',
+  services: '🛠️ Servicios',
+  projects: '🚀 Proyectos',
+  about: 'ℹ️ Sobre nosotros',
+  footer: '📋 Pie de página',
+  chatbot: '🤖 Chatbot',
+};
+
+async function loadControlPanel() {
+  try {
+    const res = await fetch('/api/page-content');
+    pageSections = await res.json();
+    const editor = $('pageEditor');
+    if (!editor) return;
+    if (!pageSections || pageSections.error) {
+      editor.innerHTML = '<p style="color:#e17055">Error al cargar contenido</p>';
+      return;
+    }
+    renderPageEditor(editor);
+  } catch (err) {
+    $('pageEditor').innerHTML = `<p style="color:#e17055">Error: ${err.message}</p>`;
+  }
+}
+
+$('saveWebFrontBtn').addEventListener('click', saveWebFront);
+
+async function saveWebFront() {
+  const btn = $('saveWebFrontBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Guardando...';
+  try {
+    for (const item of pageSections) {
+      await api(`/page-content/${item.id}`, { method: 'PUT', body: JSON.stringify({ content: item.content }) });
+    }
+    showToast('✅ Web Front guardado correctamente');
+  } catch (err) {
+    showToast('❌ Error: ' + err.message);
+  }
+  btn.disabled = false;
+  btn.textContent = '💾 Save Web Front';
+}
+
+function renderPageEditor(container) {
+  const grouped = {};
+  pageSections.forEach(item => {
+    if (!grouped[item.section_key]) grouped[item.section_key] = [];
+    grouped[item.section_key].push(item);
+  });
+
+  let html = '';
+  for (const [key, items] of Object.entries(grouped)) {
+    const label = SECTION_LABELS[key] || `📄 ${key}`;
+    items.sort((a, b) => a.sort_order - b.sort_order);
+    html += `<div class="pe-section" data-section="${key}">
+      <div class="pe-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span>${label}</span>
+        <span class="pe-toggle">▼</span>
+      </div>
+      <div class="pe-section-body" data-section="${key}">`;
+    items.forEach(item => {
+      html += renderItemEditor(item);
+    });
+    html += `</div></div>`;
+  }
+  container.innerHTML = html;
+  initDragDrop();
+}
+
+function initDragDrop() {
+  document.querySelectorAll('.pe-card[draggable]').forEach(card => {
+    card.addEventListener('dragstart', handleDragStart);
+    card.addEventListener('dragend', handleDragEnd);
+    card.addEventListener('dragover', handleDragOver);
+    card.addEventListener('drop', handleDrop);
+  });
+}
+
+let dragSrcId = null;
+
+function handleDragStart(e) {
+  dragSrcId = this.dataset.id;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragEnd(e) {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.pe-card').forEach(c => c.style.borderTop = '');
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.pe-card').forEach(c => c.style.borderTop = '');
+  this.style.borderTop = '2px solid #6c5ce7';
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  this.style.borderTop = '';
+  const targetId = this.dataset.id;
+  if (!dragSrcId || dragSrcId === targetId) return;
+
+  const srcItem = pageSections.find(i => i.id === parseInt(dragSrcId));
+  const tgtItem = pageSections.find(i => i.id === parseInt(targetId));
+  if (!srcItem || !tgtItem || srcItem.section_key !== tgtItem.section_key) return;
+
+  // Swap sort_order
+  const tmp = srcItem.sort_order;
+  srcItem.sort_order = tgtItem.sort_order;
+  tgtItem.sort_order = tmp;
+
+  // Save reorder to server
+  api(`/page-content/${srcItem.id}/reorder`, { method: 'PUT', body: JSON.stringify({ sort_order: srcItem.sort_order }) });
+  api(`/page-content/${tgtItem.id}/reorder`, { method: 'PUT', body: JSON.stringify({ sort_order: tgtItem.sort_order }) });
+
+  renderPageEditor($('pageEditor'));
+}
+
+function renderItemEditor(item) {
+  const c = item.content;
+  if (!c || typeof c !== 'object') return '';
+  const key = item.item_key;
+  const section = item.section_key;
+  const id = item.id;
+  let html = `<div class="pe-card" data-id="${id}" draggable="true" data-section="${section}" data-item="${key}">
+    <div class="pe-card-header" onclick="this.parentElement.classList.toggle('collapsed')">
+      <span class="pe-drag-handle" title="Arrastrar para reordenar">⠿</span>
+      <span class="pe-card-title">${key}</span>
+      <span class="pe-toggle">▼</span>
+    </div>
+    <div class="pe-card-body">`;
+
+  if (section === 'navbar') {
+    html += navbarEditor(id, c, key);
+  } else if (section === 'hero') {
+    html += heroEditor(id, c, key);
+  } else if (section === 'stats') {
+    html += statsEditor(id, c, key);
+  } else if (section === 'services') {
+    html += servicesEditor(id, c, key);
+  } else if (section === 'projects') {
+    html += projectsEditor(id, c, key);
+  } else if (section === 'about') {
+    html += aboutEditor(id, c, key);
+  } else if (section === 'footer') {
+    html += footerEditor(id, c, key);
+  } else if (section === 'chatbot') {
+    html += chatbotEditor(id, c, key);
+  } else {
+    html += genericEditor(id, c, key);
+  }
+
+  html += `</div></div>`;
+  return html;
+}
+
+function bindInput(id, key, path) {
+  const el = document.querySelector(`[data-bind="${id}-${path}"]`);
+  if (el) {
+    el.addEventListener('input', () => {
+      const item = pageSections.find(i => i.id === id);
+      if (!item) return;
+      const parts = path.split('.');
+      let obj = item.content;
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (!obj[parts[i]]) obj[parts[i]] = {};
+        obj = obj[parts[i]];
+      }
+      obj[parts[parts.length - 1]] = el.value;
+    });
+  }
+}
+
+function bindArrayItem(id, arrayPath, index, field) {
+  const el = document.querySelector(`[data-bind="${id}-${arrayPath}-${index}-${field}"]`);
+  if (el) {
+    el.addEventListener('input', () => {
+      const item = pageSections.find(i => i.id === id);
+      if (!item) return;
+      const arr = getNested(item.content, arrayPath);
+      if (arr && arr[index]) arr[index][field] = el.value;
+    });
+  }
+}
+
+function getNested(obj, path) {
+  return path.split('.').reduce((o, p) => o ? o[p] : null, obj);
+}
+
+function setNested(obj, path, value) {
+  const parts = path.split('.');
+  let o = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (!o[parts[i]]) o[parts[i]] = {};
+    o = o[parts[i]];
+  }
+  o[parts[parts.length - 1]] = value;
+}
+
+function textInput(id, path, label, value, placeholder = '') {
+  const v = typeof value === 'string' ? value.replace(/"/g, '&quot;') : (value || '');
+  return `<div class="pe-field"><label>${label}</label><input type="text" class="pe-input" data-bind="${id}-${path}" value="${v}" placeholder="${placeholder}"></div>`;
+}
+
+function textareaInput(id, path, label, value, placeholder = '') {
+  return `<div class="pe-field"><label>${label}</label><textarea class="pe-input pe-textarea" data-bind="${id}-${path}" placeholder="${placeholder}">${value || ''}</textarea></div>`;
+}
+
+function colorInput(id, path, label, value) {
+  return `<div class="pe-field pe-field-sm"><label>${label}</label><input type="color" class="pe-color" data-bind="${id}-${path}" value="${value || '#000000'}"></div>`;
+}
+
+function imageUploader(id, path, label, currentUrl) {
+  const preview = currentUrl ? `<img src="${currentUrl}" class="pe-img-preview" style="max-width:120px;max-height:80px;border-radius:6px">` : '';
+  return `<div class="pe-field">
+    <label>${label}</label>
+    <div class="pe-img-upload" data-bind="${id}-${path}">
+      ${preview}
+      <input type="text" class="pe-input" value="${currentUrl || ''}" placeholder="URL o subí una imagen" data-bind="${id}-${path}">
+      <button class="btn btn-sm" onclick="uploadImage(this, '${id}', '${path}')">📁 Subir</button>
+      <input type="file" accept="image/*" style="display:none" onchange="handleFileUpload(this, '${id}', '${path}')">
+    </div>
+  </div>`;
+}
+
+async function uploadImage(btn, id, path) {
+  const fileInput = btn.nextElementSibling;
+  fileInput.click();
+}
+
+async function handleFileUpload(input, id, path) {
+  const file = input.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.url) {
+      const textInput = input.parentElement.querySelector('input[type="text"]');
+      if (textInput) textInput.value = data.url;
+      const item = pageSections.find(i => i.id === id);
+      if (item) setNested(item.content, path, data.url);
+      // Update preview
+      const preview = input.parentElement.querySelector('.pe-img-preview');
+      if (preview) { preview.src = data.url; }
+      else {
+        const img = document.createElement('img');
+        img.src = data.url;
+        img.className = 'pe-img-preview';
+        img.style.cssText = 'max-width:120px;max-height:80px;border-radius:6px';
+        input.parentElement.insertBefore(img, input);
+      }
+      showToast('✅ Imagen subida');
+    }
+  } catch (err) {
+    showToast('❌ Error: ' + err.message);
+  }
+  input.value = '';
+}
+
+/* ── Section-specific editors ──────────────────────────── */
+
+function navbarEditor(id, c, key) {
+  let html = textInput(id, 'site_name', 'Nombre del sitio', c.site_name, 'WebMerge Studio');
+  html += imageUploader(id, 'logo', 'Logo', c.logo);
+  html += `<div class="pe-field"><label>Botones de navegación</label><div class="pe-array" id="navItems-${id}">`;
+  if (c.items && c.items.length) {
+    c.items.forEach((item, i) => {
+      html += `<div class="pe-array-item">
+        <input type="text" class="pe-input pe-array-input" value="${item.label}" placeholder="Texto" data-bind="${id}-items-${i}-label">
+        <input type="text" class="pe-input pe-array-input" value="${item.href}" placeholder="#seccion" data-bind="${id}-items-${i}-href">
+        <button class="btn-icon delete" onclick="removeNavItem(${id}, ${i})">✕</button>
+      </div>`;
+    });
+  }
+  html += `</div><button class="btn btn-sm" onclick="addNavItem(${id})" style="margin-top:6px">+ Agregar botón</button></div>`;
+  return html;
+}
+
+function heroEditor(id, c, key) {
+  let html = textInput(id, 'title', 'Título principal', c.title);
+  html += textInput(id, 'title_highlight', 'Título destacado (color)', c.title_highlight);
+  html += textInput(id, 'subtitle', 'Subtítulo', c.subtitle);
+  html += textareaInput(id, 'description', 'Descripción', c.description);
+  html += `<div class="pe-field-row">`;
+  html += textInput(id, 'cta_primary.text', 'Botón 1 — texto', c.cta_primary?.text);
+  html += textInput(id, 'cta_primary.href', 'Botón 1 — link', c.cta_primary?.href);
+  html += `</div><div class="pe-field-row">`;
+  html += textInput(id, 'cta_secondary.text', 'Botón 2 — texto', c.cta_secondary?.text);
+  html += textInput(id, 'cta_secondary.href', 'Botón 2 — link', c.cta_secondary?.href);
+  html += `</div>`;
+  return html;
+}
+
+function statsEditor(id, c, key) {
+  let html = textInput(id, 'icon', 'Icono (emoji)', c.icon);
+  html += textInput(id, 'value', 'Valor', c.value);
+  html += textInput(id, 'label', 'Etiqueta', c.label);
+  return html;
+}
+
+function servicesEditor(id, c, key) {
+  let html = textInput(id, 'icon', 'Icono (emoji)', c.icon);
+  html += textInput(id, 'title', 'Título', c.title);
+  html += textareaInput(id, 'description', 'Descripción', c.description);
+  html += `<div class="pe-field"><label>Características</label><div class="pe-array" id="features-${id}">`;
+  if (c.features && c.features.length) {
+    c.features.forEach((f, i) => {
+      html += `<div class="pe-array-item">
+        <input type="text" class="pe-input pe-array-input" value="${f}" data-bind="${id}-features-${i}">
+        <button class="btn-icon delete" onclick="removeArrayItem('features', ${id}, ${i})">✕</button>
+      </div>`;
+    });
+  }
+  html += `</div><button class="btn btn-sm" onclick="addArrayItem('features', ${id})" style="margin-top:6px">+ Agregar característica</button></div>`;
+  html += imageUploader(id, 'image_url', 'Imagen', c.image_url);
+  return html;
+}
+
+function projectsEditor(id, c, key) {
+  let html = textInput(id, 'icon', 'Icono (emoji)', c.icon);
+  html += textInput(id, 'tag', 'Etiqueta / Categoría', c.tag);
+  html += textInput(id, 'title', 'Título', c.title);
+  html += textareaInput(id, 'description', 'Descripción', c.description);
+  html += textInput(id, 'link', 'Link del proyecto', c.link);
+  html += `<div class="pe-field"><label>Tecnologías</label><div class="pe-array" id="tech-${id}">`;
+  if (c.tech && c.tech.length) {
+    c.tech.forEach((t, i) => {
+      html += `<div class="pe-array-item">
+        <input type="text" class="pe-input pe-array-input" value="${t}" data-bind="${id}-tech-${i}">
+        <button class="btn-icon delete" onclick="removeArrayItem('tech', ${id}, ${i})">✕</button>
+      </div>`;
+    });
+  }
+  html += `</div><button class="btn btn-sm" onclick="addArrayItem('tech', ${id})" style="margin-top:6px">+ Agregar tecnología</button></div>`;
+  return html;
+}
+
+function aboutEditor(id, c, key) {
+  if (key === 'mission') {
+    let html = textInput(id, 'title', 'Título', c.title);
+    html += textareaInput(id, 'text', 'Texto', c.text);
+    return html;
+  }
+  if (key === 'values' || key.startsWith('values')) {
+    let html = textInput(id, 'icon', 'Icono (emoji)', c.icon);
+    html += textInput(id, 'title', 'Título', c.title);
+    html += textareaInput(id, 'text', 'Texto', c.text);
+    return html;
+  }
+  if (key === 'team_stats') {
+    let html = '';
+    if (c.items && c.items.length) {
+      c.items.forEach((item, i) => {
+        html += `<div class="pe-field-row">`;
+        html += textInput(id, `items.${i}.value`, `Valor ${i+1}`, item.value);
+        html += textInput(id, `items.${i}.label`, `Label ${i+1}`, item.label);
+        html += `</div>`;
+      });
+    }
+    return html;
+  }
+  return genericEditor(id, c, key);
+}
+
+function footerEditor(id, c, key) {
+  let html = textInput(id, 'brand', 'Marca', c.brand);
+  html += textareaInput(id, 'description', 'Descripción', c.description);
+  html += textInput(id, 'copyright', 'Copyright', c.copyright);
+  if (c.social) {
+    html += `<div class="pe-field"><label>Redes sociales</label><div class="pe-social">`;
+    Object.entries(c.social).forEach(([platform, url]) => {
+      html += `<div class="pe-array-item">
+        <span class="pe-social-label">${platform}</span>
+        <input type="text" class="pe-input pe-array-input" value="${url}" data-bind="${id}-social.${platform}" placeholder="URL">
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+  return html;
+}
+
+function chatbotEditor(id, c, key) {
+  let html = textInput(id, 'name', 'Nombre del bot', c.name);
+  html += textareaInput(id, 'greeting', 'Mensaje de bienvenida', c.greeting);
+  html += imageUploader(id, 'logo', 'Logo del chat', c.logo);
+  if (c.theme) {
+    html += `<div class="pe-field-row">`;
+    html += colorInput(id, 'theme.primary', 'Color primario', c.theme.primary);
+    html += colorInput(id, 'theme.secondary', 'Color secundario', c.theme.secondary);
+    html += `</div><div class="pe-field-row">`;
+    html += colorInput(id, 'theme.bg', 'Fondo', c.theme.bg);
+    html += colorInput(id, 'theme.text', 'Texto', c.theme.text);
+    html += `</div>`;
+  }
+  return html;
+}
+
+function genericEditor(id, c, key) {
+  let html = '';
+  for (const [k, v] of Object.entries(c)) {
+    if (typeof v === 'string') {
+      html += textInput(id, k, k, v);
+    }
+  }
+  return html;
+}
+
+/* ── Array helpers ─────────────────────────────────────── */
+
+function addNavItem(id) {
+  const item = pageSections.find(i => i.id === id);
+  if (!item) return;
+  if (!item.content.items) item.content.items = [];
+  item.content.items.push({ label: '', href: '' });
+  loadControlPanel();
+}
+
+function removeNavItem(id, index) {
+  const item = pageSections.find(i => i.id === id);
+  if (!item) return;
+  item.content.items.splice(index, 1);
+  loadControlPanel();
+}
+
+function addArrayItem(field, id) {
+  const item = pageSections.find(i => i.id === id);
+  if (!item) return;
+  if (!item.content[field]) item.content[field] = [];
+  item.content[field].push('');
+  loadControlPanel();
+}
+
+function removeArrayItem(field, id, index) {
+  const item = pageSections.find(i => i.id === id);
+  if (!item) return;
+  if (item.content[field]) item.content[field].splice(index, 1);
+  loadControlPanel();
 }
 
 /* ── Auto-login check ────────────────────────────────────── */
