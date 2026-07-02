@@ -1100,8 +1100,7 @@ const SECTION_LABELS = {
 
 async function loadControlPanel() {
   try {
-    const res = await fetch('/api/page-content');
-    pageSections = await res.json();
+    pageSections = await api('/page-content');
     const editor = $('pageEditor');
     if (!editor) return;
     if (!pageSections || pageSections.error) {
