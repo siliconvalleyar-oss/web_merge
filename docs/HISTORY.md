@@ -2,6 +2,8 @@
 
 ## v4.6.9 (2026-07-02)
 - fix: mascotEl/mascotInner se consultaban antes de DOM ready → todo era null
+- fix: campos mascota estaban FUERA de #configForm → nunca se guardaban al hacer clic en Guardar
+- fix: falta mascot_size en DB (insertado manualmente)
 - feat: slider tamaño mascota en admin (20-300px), sin afectar posición X/Y
 - feat: config mascot_size en setup-db.js y server.js
 - chore: bump 4.6.8 → 4.6.9
