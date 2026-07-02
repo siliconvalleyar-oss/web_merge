@@ -169,7 +169,7 @@ async function initWhatsApp() {
       }
 
       const rawFrom = msg.from || '';
-      const userNumber = rawFrom.replace(/@c\.us$/, '');
+      const userNumber = rawFrom.replace(/@(c\.us|lid)$/, '');
       const userQuery = (msg.body || '').trim().toLowerCase();
 
       console.log(`  📩 [${source}] WhatsApp msg de ${userNumber}: "${userQuery.substring(0, 60)}"`);
@@ -182,7 +182,7 @@ async function initWhatsApp() {
       let response;
       if (userQuery === '0' || userQuery === 'volver' || userQuery === 'atras' || userQuery === 'back') {
         response = buildMenu('');
-      } else if (/^[0-9]+$/.test(userQuery) || /^[a-z]([. ][a-z0-9])?$/.test(userQuery)) {
+      } else if (/^[0-9]+$/.test(userQuery) || /^[a-z]([a-z0-9]|[. ][a-z0-9])?$/.test(userQuery)) {
         response = getMenuResponse(userQuery);
       } else if (userQuery === 'menu' || userQuery === 'hola' || userQuery === 'buenas' || userQuery.includes('menu')) {
         response = buildMenu('');
@@ -340,7 +340,7 @@ function markConversationUnread(number) {
 
 async function sendMessage(number, text) {
   if (!client) throw new Error('WhatsApp no conectado');
-  const chatId = number.includes('@c.us') ? number : `${number}@c.us`;
+  const chatId = /@(c\.us|lid)$/.test(number) ? number : `${number}@c.us`;
   try {
     const chat = await client.getChatById(chatId);
     await chat.sendMessage(text);
@@ -366,7 +366,7 @@ async function deleteConversation(number) {
     db.prepare('DELETE FROM whatsapp_messages WHERE number = ?').run(number);
     if (client) {
       try {
-        const chatId = number.includes('@c.us') ? number : `${number}@c.us`;
+        const chatId = /@(c\.us|lid)$/.test(number) ? number : `${number}@c.us`;
         const chat = await client.getChatById(chatId);
         await chat.delete();
         console.log(`  🗑 Conversación eliminada de WhatsApp: ${number}`);
