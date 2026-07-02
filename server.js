@@ -136,12 +136,14 @@ const app = express();
 const PORT = config.PORT;
 const fs = require('fs');
 
-const multer = require('multer');
-const uploadStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, 'assets', 'uploads')),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_'))
-});
-const upload = multer({ storage: uploadStorage });
+let upload = null;
+try { const multer = require('multer');
+  const uploadStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, path.join(__dirname, 'assets', 'uploads')),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_'))
+  });
+  upload = multer({ storage: uploadStorage });
+} catch (e) { console.log('  ! multer no disponible, subida de archivos desactivada:', e.message); }
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -193,12 +195,16 @@ const seedPage = db.transaction(() => {
 });
 seedPage();
 
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    res.json({ url: '/assets/uploads/' + req.file.filename });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
+if (upload) {
+  app.post('/api/upload', upload.single('file'), (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+      res.json({ url: '/assets/uploads/' + req.file.filename });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  });
+} else {
+  app.post('/api/upload', (req, res) => res.status(503).json({ error: 'File upload not available (install multer)' }));
+}
 
 app.get('/api/uploads/list', (req, res) => {
   try {
