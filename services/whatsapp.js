@@ -143,35 +143,19 @@ async function initWhatsApp() {
   const chromePath = findChrome();
   const puppeteerOpts = {
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--disable-background-networking',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      '--disable-field-trial-config',
+    ],
   };
   if (chromePath) puppeteerOpts.executablePath = chromePath;
-
-  client = new Client({
-    authStrategy: new LocalAuth({ clientId: 'webmerge-bot' }),
-    puppeteer: puppeteerOpts,
-  });
-
-  client.on('qr', qr => {
-    qrCode = qr;
-    pairingCode = null;
-    status = 'qr_ready';
-    console.log('📱 WhatsApp QR ready — escanea con tu teléfono');
-  });
-
-  client.on('ready', () => {
-    status = 'connected';
-    qrCode = null;
-    pairingCode = null;
-    console.log('✅ WhatsApp conectado');
-    console.log('  📬 Esperando mensajes...');
-  });
-
-  client.on('disconnected', reason => {
-    status = 'disconnected';
-    qrCode = null;
-    console.log('❌ WhatsApp desconectado:', reason);
-  });
 
   const botName = (() => {
     try { const r = db.prepare("SELECT config_value FROM config WHERE config_key = 'chatbot_name'").get(); return r ? r.config_value : 'WebBot'; } catch { return 'WebBot'; }
@@ -237,18 +221,58 @@ Mientras tanto, escribí *menu* para ver las opciones disponibles.`;
     }
   };
 
-  client.on('message', msg => handleMessage(msg, 'message'));
+  function createClient() {
+    client = new Client({
+      authStrategy: new LocalAuth({ clientId: 'webmerge-bot' }),
+      puppeteer: puppeteerOpts,
+    });
+    client.on('qr', qr => {
+      qrCode = qr;
+      pairingCode = null;
+      status = 'qr_ready';
+      console.log('📱 WhatsApp QR ready — escanea con tu teléfono');
+    });
+    client.on('ready', () => {
+      status = 'connected';
+      qrCode = null;
+      pairingCode = null;
+      console.log('✅ WhatsApp conectado');
+      console.log('  📬 Esperando mensajes...');
+    });
+    client.on('disconnected', reason => {
+      status = 'disconnected';
+      qrCode = null;
+      console.log('❌ WhatsApp desconectado:', reason);
+    });
+    client.on('auth_failure', msg => {
+      status = 'auth_failure';
+      console.error('❌ WhatsApp auth failure:', msg);
+    });
+    client.on('message', msg => handleMessage(msg, 'message'));
+  }
 
-  client.on('auth_failure', msg => {
-    status = 'auth_failure';
-    console.error('❌ WhatsApp auth failure:', msg);
-  });
+  createClient();
 
-  try {
-    await client.initialize();
-  } catch (err) {
-    console.error('WhatsApp init error:', err.message);
-    status = 'error';
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await client.initialize();
+      return;
+    } catch (err) {
+      console.error(`WhatsApp init error (intento ${attempt}/2):`, err.message);
+      if (attempt === 2 || !err.message.includes('Navigating frame was detached')) {
+        status = 'error';
+        return;
+      }
+      console.log('  🧹 Limpiando sesión corrupta y reintentando...');
+      try { await client.destroy(); } catch {}
+      client = null;
+      const sessionDir = path.join(__dirname, '..', '.wwebjs_auth', 'session-webmerge-bot');
+      if (fs.existsSync(sessionDir)) {
+        fs.rmSync(sessionDir, { recursive: true, force: true });
+      }
+      await new Promise(r => setTimeout(r, 3000));
+      createClient();
+    }
   }
 }
 
