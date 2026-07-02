@@ -147,7 +147,11 @@ try { const multer = require('multer');
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use((req, res, next) => {
+  if (/\.(html?|js|css|json)$/i.test(req.path)) res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  next();
+});
+app.use(express.static(path.join(__dirname, 'public'), { etag: false, lastModified: false }));
 app.use('/assets/carrusel', express.static(path.join(__dirname, 'assets/carrusel')));
 app.use('/assets/simbols', express.static(path.join(__dirname, 'assets/simbols')));
 app.use('/assets/uploads', express.static(path.join(__dirname, 'assets/uploads')));
