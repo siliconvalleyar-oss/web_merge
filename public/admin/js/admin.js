@@ -1119,13 +1119,17 @@ async function saveWebFront() {
   const btn = $('saveWebFrontBtn');
   btn.disabled = true;
   btn.textContent = '⏳ Guardando...';
-  try {
-    for (const item of pageSections) {
-      await api(`/page-content/${item.id}`, { method: 'PUT', body: JSON.stringify({ content: item.content }) });
-    }
+  let errors = [];
+  for (const item of pageSections) {
+    if (!item.id) { errors.push(`${item.section_key}/${item.item_key}: sin id`); continue; }
+    const res = await api(`/page-content/${item.id}`, { method: 'PUT', body: JSON.stringify({ content: item.content }) });
+    if (!res || !res.success) errors.push(`${item.section_key}/${item.item_key}: ${(res && res.error) || 'sin respuesta'}`);
+  }
+  if (errors.length === 0) {
     showToast('✅ Web Front guardado correctamente');
-  } catch (err) {
-    showToast('❌ Error: ' + err.message);
+    loadControlPanel();
+  } else {
+    showToast('❌ Error en ' + errors.join(', '));
   }
   btn.disabled = false;
   btn.textContent = '💾 Save Web Front';

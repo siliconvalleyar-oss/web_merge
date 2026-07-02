@@ -454,7 +454,10 @@ router.get('/page-content', authMiddleware, (req, res) => {
 router.put('/page-content/:id', authMiddleware, (req, res) => {
   try {
     const { content } = req.body;
-    db.prepare('UPDATE page_content SET content = ?, updated_at = datetime(\'now\') WHERE id = ?').run(JSON.stringify(content), req.params.id);
+    const contentStr = JSON.stringify(content);
+    const info = db.prepare('UPDATE page_content SET content = ?, updated_at = datetime(\'now\') WHERE id = ?').run(contentStr, req.params.id);
+    console.log('[page-content] PUT id=%s changes=%d', req.params.id, info.changes);
+    if (info.changes === 0) return res.status(404).json({ error: 'id not found' });
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
