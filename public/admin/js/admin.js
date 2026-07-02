@@ -432,6 +432,11 @@ function applyMascotConfig(c) {
     const display = yRange.nextElementSibling;
     if (display) display.textContent = (c.mascot_pos_y || '50') + '%';
   }
+  const sizeRange = document.querySelector('[name="mascot_size"]');
+  if (sizeRange) {
+    const display = sizeRange.nextElementSibling;
+    if (display) display.textContent = (c.mascot_size || '80') + 'px';
+  }
 }
 
 $('saveAdminConfigBtn')?.addEventListener('click', async () => {

@@ -102,6 +102,7 @@ const configDefaults = [
   ['mascot_file',     'simbol_git.svg'],
   ['mascot_pos_x',    '20'],
   ['mascot_pos_y',    '60'],
+  ['mascot_size',     '80'],
   ['admin_bg',        '#0a0a14'],
   ['admin_sidebar',   '#141425'],
   ['admin_accent',    '#6c5ce7'],

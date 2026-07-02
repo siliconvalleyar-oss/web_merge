@@ -1,5 +1,10 @@
 # Historial de Cambios — WebMerge Studio
 
+## v4.6.9 (2026-07-02)
+- feat: slider tamaño mascota en admin (20-300px), sin afectar posición X/Y
+- feat: config mascot_size en setup-db.js y server.js
+- chore: bump 4.6.8 → 4.6.9
+
 ## v4.6.8 (2026-07-02)
 - feat: initMascot() en main.js carga SVG desde config y lo posiciona
 - feat: admin UI para mascota (switch on/off, selector SVG, sliders X/Y)

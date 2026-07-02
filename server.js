@@ -84,6 +84,7 @@ const adminConfigDefaults = [
   ['mascot_file',     'simbol_git.svg'],
   ['mascot_pos_x',    '20'],
   ['mascot_pos_y',    '60'],
+  ['mascot_size',     '80'],
 ];
 const insertConfig = db.prepare('INSERT OR IGNORE INTO config (config_key, config_value) VALUES (?, ?)');
 for (const [k, v] of adminConfigDefaults) insertConfig.run(k, v);
