@@ -1098,6 +1098,8 @@ const SECTION_LABELS = {
   chatbot: '🤖 Chatbot',
 };
 
+const SECTION_ORDER = ['navbar', 'hero', 'stats', 'services', 'projects', 'about', 'footer', 'chatbot'];
+
 async function loadControlPanel() {
   try {
     pageSections = await api('/page-content');
@@ -1143,9 +1145,12 @@ function renderPageEditor(container) {
   });
 
   let html = '';
-  for (const [key, items] of Object.entries(grouped)) {
+  const seen = new Set();
+  for (const key of SECTION_ORDER) {
+    if (!grouped[key]) continue;
+    seen.add(key);
+    const items = grouped[key].sort((a, b) => a.sort_order - b.sort_order);
     const label = SECTION_LABELS[key] || `📄 ${key}`;
-    items.sort((a, b) => a.sort_order - b.sort_order);
     html += `<div class="pe-section collapsed" data-section="${key}">
       <div class="pe-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
         <span>${label}</span>
@@ -1155,6 +1160,19 @@ function renderPageEditor(container) {
     items.forEach(item => {
       html += renderItemEditor(item);
     });
+    html += `</div></div>`;
+  }
+  for (const key of Object.keys(grouped)) {
+    if (seen.has(key)) continue;
+    const items = grouped[key].sort((a, b) => a.sort_order - b.sort_order);
+    const label = key;
+    html += `<div class="pe-section collapsed" data-section="${key}">
+      <div class="pe-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span>📄 ${label}</span>
+        <span class="pe-toggle">▼</span>
+      </div>
+      <div class="pe-section-body" data-section="${key}">`;
+    items.forEach(item => { html += renderItemEditor(item); });
     html += `</div></div>`;
   }
   container.innerHTML = html;
