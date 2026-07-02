@@ -424,16 +424,19 @@ function applyMascotConfig(c) {
 
   const xRange = document.querySelector('[name="mascot_pos_x"]');
   if (xRange) {
+    xRange.value = c.mascot_pos_x ?? '50';
     const display = xRange.nextElementSibling;
     if (display) display.textContent = (c.mascot_pos_x || '50') + '%';
   }
   const yRange = document.querySelector('[name="mascot_pos_y"]');
   if (yRange) {
+    yRange.value = c.mascot_pos_y ?? '50';
     const display = yRange.nextElementSibling;
     if (display) display.textContent = (c.mascot_pos_y || '50') + '%';
   }
   const sizeRange = document.querySelector('[name="mascot_size"]');
   if (sizeRange) {
+    sizeRange.value = c.mascot_size ?? '80';
     const display = sizeRange.nextElementSibling;
     if (display) display.textContent = (c.mascot_size || '80') + 'px';
   }

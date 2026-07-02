@@ -63,8 +63,7 @@ function applyMascotConfig(config) {
   if (img) {
     if (config.mascot_file) img.src = '/assets/simbols/' + config.mascot_file;
     const size = parseInt(config.mascot_size) || 80;
-    img.style.width = size + 'px';
-    img.style.height = 'auto';
+    el.style.width = size + 'px';
   }
   if (enabled) {
     applyMascotPosition(config.mascot_pos_x, config.mascot_pos_y);

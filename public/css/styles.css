@@ -132,14 +132,14 @@ ul { list-style: none; }
 /* ── Mascot ──────────────────────────────────────────────── */
 .mascot {
   position: fixed; z-index: 2;
-  pointer-events: none; width: 80px;
+  pointer-events: none;
   transform: translate(-50%, -50%);
   opacity: 0;
   transition: opacity 0.5s ease;
 }
 .mascot.visible { opacity: 1; }
 .mascot img {
-  display: block;
+  display: block; width: 100%; height: auto;
 }
 @media (max-width: 768px) {
   .mascot { display: none; }
