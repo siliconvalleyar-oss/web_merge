@@ -43,20 +43,7 @@ Store.on('config', applyCarouselOpacity);
 
 /* ── Mascot ──────────────────────────────────────────────── */
 function getMascotEl() { return document.getElementById('mascot'); }
-function getMascotInner() { return document.getElementById('mascotInner'); }
-
-async function loadMascotSVG(filename) {
-  if (!filename) return;
-  const inner = getMascotInner();
-  if (!inner) return;
-  try {
-    const res = await fetch(`/assets/simbols/${filename}`);
-    if (!res.ok) throw new Error('Not found');
-    inner.innerHTML = await res.text();
-  } catch {
-    inner.innerHTML = '';
-  }
-}
+function getMascotImg() { return document.getElementById('mascotImg'); }
 
 function applyMascotPosition(x, y) {
   const el = getMascotEl();
@@ -72,11 +59,15 @@ function applyMascotConfig(config) {
   if (!el) return;
   const enabled = config.mascot_enabled === '1' || config.mascot_enabled === true;
   el.classList.toggle('visible', enabled);
-  if (enabled) {
-    loadMascotSVG(config.mascot_file || 'simbol_git.svg');
-    applyMascotPosition(config.mascot_pos_x, config.mascot_pos_y);
+  const img = getMascotImg();
+  if (img) {
+    if (config.mascot_file) img.src = '/assets/simbols/' + config.mascot_file;
     const size = parseInt(config.mascot_size) || 80;
-    el.style.width = size + 'px';
+    img.style.width = size + 'px';
+    img.style.height = 'auto';
+  }
+  if (enabled) {
+    applyMascotPosition(config.mascot_pos_x, config.mascot_pos_y);
   }
 }
 

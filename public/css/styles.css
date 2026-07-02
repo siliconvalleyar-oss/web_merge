@@ -138,8 +138,7 @@ ul { list-style: none; }
   transition: opacity 0.5s ease;
 }
 .mascot.visible { opacity: 1; }
-.mascot-inner svg {
-  width: 100%; height: auto;
+.mascot img {
   display: block;
 }
 @media (max-width: 768px) {
